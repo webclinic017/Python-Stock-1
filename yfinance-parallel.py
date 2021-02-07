@@ -63,7 +63,7 @@ size=20
 stocks = list(df["Symbol"].sample(n=size))
 
 def dl(stock):
-    return yf.download(stock, start=start, end=end).iloc[:, :5].dropna(axis=0, how='any')
+    return yf.download(stock, start=start, end=end).iloc[:, :6].dropna(axis=0, how='any')
 
 futures = [pool.submit(dl, args) for args in stocks]
 wait(futures, timeout=None, return_when=ALL_COMPLETED)
@@ -279,11 +279,11 @@ def stocks_table_function(**kwargs):
 
     print('DF Shape: ', stocks_table_data.shape)
 
-    print(stocks_table_data) 
 
     stocks_table_data.to_csv('~stocks_table_data.csv', index = False)
 
-    print('Completed')
+    return(stocks_table_data) 
+    #print('Completed')
 
 
 stocks_table_function()
