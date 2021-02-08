@@ -14,6 +14,11 @@ import time
 import stat
 from datetime import date
 from functools import reduce
+#import pandas-datareader
+#import mpl-finance
+import stockstats
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 pool = concurrent.futures.ProcessPoolExecutor()
 
@@ -287,3 +292,67 @@ def stocks_table_function(**kwargs):
 
 
 stocks_table_function()
+
+#clear plot
+plt.show()
+fig = plt.figure(figsize=(10, 10))
+ax = plt.subplot()
+plot_data = []
+#subset["Adj Close"]
+
+#charts
+from stockstats import StockDataFrame
+
+for i in stocks:
+    subset = stocks_data[stocks_data["Symbol"]==i]
+    stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
+
+    plt.plot(stock["macd"], color="y", label="MACD")
+    plt.plot(stock["macds"], color="m", label="Signal Line")
+    plt.plot(stock["close_10_sma"], color="b", label="SMA")
+    plt.plot(stock["close_12_ema"], color="r", label="EMA")
+    plt.plot(stock["adj close"], color="g", label="Close prices")
+    plt.legend(loc="lower right")
+    plt.show()
+    #print(stock)
+
+#backtest
+#!pip install fastquant
+from stockstats import StockDataFrame
+from fastquant import backtest, get_stock_data
+
+pool2 = concurrent.futures.ProcessPoolExecutor()
+
+# Utilize single set of parameters
+strats = { 
+    "smac": {"fast_period": 35, "slow_period": 50}, 
+    "rsi": {"rsi_lower": 30, "rsi_upper": 70} 
+} 
+
+strats_opt = { 
+    "smac": {"fast_period": 35, "slow_period": [40, 50]}, 
+    "rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
+} 
+
+def back_test(stock):
+    #print(stock)
+    subset = stocks_data[stocks_data["Symbol"]==stock]
+    
+    #converts date to datetime
+    stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
+    #subset = subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]]    
+    #stock.columns = ['Date','open','high','low','close','adj close', 'volume']
+    #print(stock)
+    return(backtest("multi", stock, strats=strats_opt))
+    
+futures_back = [pool2.submit(back_test, args) for args in stocks]
+wait(futures, timeout=None, return_when=ALL_COMPLETED)
+
+res_data = pd.DataFrame()
+
+for x in range(0,len(stocks)):
+    res_opt = pd.DataFram(futures_back[x].result())
+    res_data = pd.concat([res_opt,res_data])
+    
+res_data
+    
