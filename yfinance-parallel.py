@@ -323,7 +323,7 @@ def stocks_table_function(**kwargs):
     #print('Completed')
 
 
-stocks_table_function()
+tbl = stocks_table_function()
 
 plt.show()
 fig = plt.figure(figsize=(10, 10))
@@ -396,5 +396,5 @@ for x in range(0,len(vetted_symbols)):
     res_data = pd.concat([res_opt,res_data])
     
 
-    
+tbl
 res_data
