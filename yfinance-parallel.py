@@ -19,17 +19,25 @@ from functools import reduce
 import stockstats
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import contextlib
+from stockstats import StockDataFrame
+from fastquant import backtest, get_stock_data
 
-pool = concurrent.futures.ProcessPoolExecutor()
+pool1 = concurrent.futures.ProcessPoolExecutor()
 
 end = datetime.date.today()
 start = end - timedelta(weeks=117)
 
+one_week_end = start
+one_week_start = one_week_end - timedelta(weeks=1)
+
 #need to do the two pass trick (i.e. find stocks fully populated a week 9 quarters back)
 
 nyse = mcal.get_calendar('NYSE')
-trading_dates= nyse.schedule(start_date=start, end_date=end)
-idx2 = trading_dates.index
+official_trading_dates= nyse.schedule(start_date=start, end_date=end)
+idx2 = official_trading_dates.index
+
+one_week_trading_dates = nyse.schedule(start_date=one_week_start, end_date=one_week_end)
 
 url = 'ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqtraded.txt'
 
@@ -52,7 +60,7 @@ if path.exists("nasdaqtraded.txt"):
       print("equal dates, not redownloading")
     
 else:
-    print("downloading")
+    print("downloading nasdaqtraded.txt")
     urllib.request.urlretrieve(url, 'nasdaqtraded.txt')
     
 df = pd.read_csv('nasdaqtraded.txt', sep='|')[0:-1]
@@ -64,20 +72,43 @@ pat = '|'.join(['({})'.format(re.escape(c)) for c in BAD_CHARS])
 df = df[~df['Symbol'].str.contains(pat)]
 
 #choose size
-size=20
+size=10
 stocks = list(df["Symbol"].sample(n=size))
+
+def dl_one_week(stock):
+    return yf.download(stock, start=one_week_start, end=one_week_end).iloc[:, :6].dropna(axis=0, how='any')
+
+futures1 = [pool1.submit(dl_one_week, args) for args in stocks]
+wait(futures1, timeout=None, return_when=ALL_COMPLETED)
+
+stocks_data_one_week = pd.DataFrame()
+
+for x in range(0,len(stocks)):
+    prices = pd.DataFrame(futures1[x].result())
+    prices['Symbol'] = stocks[x]
+    prices = prices.loc[~prices.index.duplicated(keep='last')]        
+    prices = prices.reset_index()
+                
+    stocks_data_one_week = pd.concat([stocks_data_one_week,prices])
+    
+stocks_data_one_week
+
+#stocks that existed 9 quarters ago
+vetted_symbols = list(stocks_data_one_week.Symbol.unique())
+
+pool2 = concurrent.futures.ProcessPoolExecutor()
 
 def dl(stock):
     return yf.download(stock, start=start, end=end).iloc[:, :6].dropna(axis=0, how='any')
 
-futures = [pool.submit(dl, args) for args in stocks]
-wait(futures, timeout=None, return_when=ALL_COMPLETED)
+futures2 = [pool2.submit(dl, args) for args in vetted_symbols]
+wait(futures2, timeout=None, return_when=ALL_COMPLETED)
 
 stocks_data = pd.DataFrame()
 
-for x in range(0,len(stocks)):
-    prices = pd.DataFrame(futures[x].result())
-    prices['Symbol'] = stocks[x]
+for x in range(0,len(vetted_symbols)):
+    prices = pd.DataFrame(futures2[x].result())
+    prices['Symbol'] = vetted_symbols[x]
     prices = prices.loc[~prices.index.duplicated(keep='last')]        
     prices = prices.reset_index()
             
@@ -89,7 +120,8 @@ for x in range(0,len(stocks)):
         
     stocks_data = pd.concat([stocks_data,df])
 
-stocks_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(size)+'stocks_data.csv', index = False)
+stocks_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'stocks_data.csv', index = False)
+
 
 def stocks_table_function(**kwargs):
 
@@ -102,11 +134,11 @@ def stocks_table_function(**kwargs):
 
     stocks_adj_close = []
 
-    for i in range(0, len(stocks)):
+    for i in range(0, len(vetted_symbols)):
 
         #adj_price= stocks_prices[i][['Date','Adj Close']]
 
-        temp =  stocks_prices['Symbol']==stocks[i]
+        temp =  stocks_prices['Symbol']==vetted_symbols[i]
         a=stocks_prices[temp]
 
         adj_price = a[["Date","Adj Close"]]
@@ -114,7 +146,7 @@ def stocks_table_function(**kwargs):
 
         adj_price.set_index('Date', inplace = True)
 
-        adj_price.columns = [stocks[i]]
+        adj_price.columns = [vetted_symbols[i]]
 
         stocks_adj_close.append(adj_price)
 
@@ -164,9 +196,9 @@ def stocks_table_function(**kwargs):
 
 
 
-    for i in range(0, len(stocks)):
+    for i in range(0, len(vetted_symbols)):
 
-        values =(get_key_stats('https://sg.finance.yahoo.com/quote/'+ str(stocks[i]) +'/key-statistics?p='+ str(stocks[i])))
+        values =(get_key_stats('https://sg.finance.yahoo.com/quote/'+ str(vetted_symbols[i]) +'/key-statistics?p='+ str(vetted_symbols[i])))
 
         statistics.append(values)
 
@@ -293,19 +325,23 @@ def stocks_table_function(**kwargs):
 
 stocks_table_function()
 
-#clear plot
 plt.show()
 fig = plt.figure(figsize=(10, 10))
 ax = plt.subplot()
 plot_data = []
 #subset["Adj Close"]
 
-#charts
-from stockstats import StockDataFrame
-
-for i in stocks:
+for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
+    
+    price_data = stock["adj close"]
+    
+    ret_data = price_data.pct_change()[1:]
+    
+    cumulative_ret = (ret_data + 1).cumprod()
+    
+    plt.plot(cumulative_ret,label="cumret")
 
     plt.plot(stock["macd"], color="y", label="MACD")
     plt.plot(stock["macds"], color="m", label="Signal Line")
@@ -316,23 +352,24 @@ for i in stocks:
     plt.show()
     #print(stock)
 
-#backtest
 #!pip install fastquant
-from stockstats import StockDataFrame
-from fastquant import backtest, get_stock_data
 
-pool2 = concurrent.futures.ProcessPoolExecutor()
+pool3 = concurrent.futures.ProcessPoolExecutor()
 
 # Utilize single set of parameters
 strats = { 
     "smac": {"fast_period": 35, "slow_period": 50}, 
-    "rsi": {"rsi_lower": 30, "rsi_upper": 70} 
+    "rsi": {"rsi_lower": 30, "rsi_upper": 70},
+    "macd": {"fast_period": 12, "slow_period": 26, "signal_period": 9, "sma_period": 30, "dir_period": 10},
+    "bbands": {"period": 20, "devfactor": 2.0},
+    "ema": {"fast_period": 10, "slow_period": 30}
 } 
 
 strats_opt = { 
     "smac": {"fast_period": 35, "slow_period": [40, 50]}, 
+    "emac": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]}, 
     "rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
-} 
+}         
 
 def back_test(stock):
     #print(stock)
@@ -343,16 +380,21 @@ def back_test(stock):
     #subset = subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]]    
     #stock.columns = ['Date','open','high','low','close','adj close', 'volume']
     #print(stock)
-    return(backtest("multi", stock, strats=strats_opt))
+    with contextlib.redirect_stdout(None):
+        #print(stock)
+        b = backtest("multi", stock, strats=strats_opt)
+        
+    return(b)
     
-futures_back = [pool2.submit(back_test, args) for args in stocks]
-wait(futures, timeout=None, return_when=ALL_COMPLETED)
+futures_back = [pool3.submit(back_test, args) for args in vetted_symbols]
+wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
 
 res_data = pd.DataFrame()
 
-for x in range(0,len(stocks)):
-    res_opt = pd.DataFram(futures_back[x].result())
+for x in range(0,len(vetted_symbols)):
+    res_opt = pd.DataFrame(futures_back[x].result())
     res_data = pd.concat([res_opt,res_data])
     
-res_data
+
     
+res_data
