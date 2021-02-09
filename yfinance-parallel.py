@@ -24,6 +24,9 @@ from stockstats import StockDataFrame
 from fastquant import backtest, get_stock_data
 import numpy as np
 
+pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
+pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
+
 pool1 = concurrent.futures.ProcessPoolExecutor()
 
 end = datetime.date.today()
@@ -77,7 +80,7 @@ size=10
 stocks = list(df["Symbol"].sample(n=size))
 
 def dl_one_week(stock):
-    return yf.download(stock, start=one_week_start, end=one_week_end).iloc[:, :6].dropna(axis=0, how='any')
+    return yf.download(stock, start=one_week_start, end=one_week_end, auto_adjust=True).iloc[:, :6].dropna(axis=0, how='any')
 
 futures1 = [pool1.submit(dl_one_week, args) for args in stocks]
 wait(futures1, timeout=None, return_when=ALL_COMPLETED)
