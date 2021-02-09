@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import contextlib
 from stockstats import StockDataFrame
 from fastquant import backtest, get_stock_data
+import numpy as np
 
 pool1 = concurrent.futures.ProcessPoolExecutor()
 
@@ -325,32 +326,61 @@ def stocks_table_function(**kwargs):
 
 tbl = stocks_table_function()
 
-plt.show()
-fig = plt.figure(figsize=(10, 10))
-ax = plt.subplot()
-plot_data = []
+#plt.show()
+#fig = plt.figure(figsize=(10, 10))
+#ax = plt.subplot()
+#plot_data = []
 #subset["Adj Close"]
 
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
+    stock.BOLL_WINDOW = 20
+    stock.BOLL_STD_TIMES = 2
     
     price_data = stock["adj close"]
     
     ret_data = price_data.pct_change()[1:]
     
     cumulative_ret = (ret_data + 1).cumprod()
+    #cumulative_ret = np.cumprod(1 + ret_data.values) - 1
     
-    plt.plot(cumulative_ret,label="cumret")
+    my_dpi = 50
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(20, 20), dpi=my_dpi)
 
-    plt.plot(stock["macd"], color="y", label="MACD")
-    plt.plot(stock["macds"], color="m", label="Signal Line")
-    plt.plot(stock["close_10_sma"], color="b", label="SMA")
-    plt.plot(stock["close_12_ema"], color="r", label="EMA")
-    plt.plot(stock["adj close"], color="g", label="Close prices")
-    plt.legend(loc="lower right")
-    plt.show()
+    # title for entire figure
+    fig.suptitle('Charts', fontsize=20)
+
+    # edit subplots
+    axes[0, 0].plot(stock["macds"], color="m", label="Signal Line")
+    axes[0, 0].legend(loc="lower right")
+    axes[0, 1].set_title('Subplot 1', fontsize=14)
+    axes[0, 1].plot(stock["macd"], color="y", label="MACD")
+    axes[0, 1].plot(stock["macds"], color="m", label="Signal Line")
+    axes[0, 1].legend(loc="lower right")
+    
+    axes[1, 0].plot(stock["close_10_sma"], color="b", label="SMA")
+    axes[1, 0].plot(stock["close_12_ema"], color="r", label="EMA")
+    axes[1, 0].plot(stock["adj close"], color="g", label="Close prices")
+    axes[1, 0].legend(loc="lower right")
+
+    axes[1, 1].plot(cumulative_ret, label="Cum Ret")
+    axes[1, 1].legend(loc="lower right")
+    
+    axes[2, 0].plot(stock['rsi_14'], color="b", label="RSI_14")
+    axes[2, 0].legend(loc="lower right")
     #print(stock)
+    
+    axes[2, 1].plot(stock['boll'], color="b", label="BBands")
+    axes[2, 1].plot(stock['boll_ub'], color="b", label="BBands")
+    axes[2, 1].plot(stock['boll_lb'], color="b", label="BBands")
+    axes[2, 1].plot(stock["adj close"], color="g", label="Close prices")
+    axes[2, 1].legend(loc="lower right")
+        
+    #axes[2, 1].set_xlabel('cumret', fontsize=14)
+    #axes[2, 1].set_title('', fontsize=14)
+
+    plt.show()
 
 #!pip install fastquant
 
@@ -395,6 +425,6 @@ for x in range(0,len(vetted_symbols)):
     res_opt = pd.DataFrame(futures_back[x].result())
     res_data = pd.concat([res_opt,res_data])
     
-
-tbl
+vetted_symbols    
 res_data
+tbl
