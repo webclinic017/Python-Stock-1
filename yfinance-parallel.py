@@ -23,6 +23,8 @@ import contextlib
 from stockstats import StockDataFrame
 from fastquant import backtest, get_stock_data
 import numpy as np
+import mplfinance as mpf
+import matplotlib.dates as mdates
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
@@ -348,44 +350,57 @@ for i in vetted_symbols:
     cumulative_ret = (ret_data + 1).cumprod()
     #cumulative_ret = np.cumprod(1 + ret_data.values) - 1
     
+    subset = stocks_data[stocks_data["Symbol"]==vetted_symbols[1]]
+    subset.set_index(subset['Date'], inplace=True) 
+    subset.index.name = 'Date'
+
+    #mpf.figure(), axes2 = fig.subplots()
+
+    s = mpf.make_mpf_style(base_mpf_style='charles', rc={'font.size': 6}) # add your own style here
+    fig = mpf.figure(figsize=(10, 7), style=s)
+    ax = fig.add_subplot(2,1,1)
+    av = fig.add_subplot(2,1,2, sharex=ax)
+    #az = fig.add_subplot(3,1,1)
+    mpf.plot(subset,type='candle',mav=(3,6,9),volume=av,show_nontrading=True, ax=ax)
+    
     my_dpi = 50
-    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(20, 20), dpi=my_dpi)
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), dpi=my_dpi)
 
     # title for entire figure
-    fig.suptitle('Charts', fontsize=20)
+    fig.suptitle(i, fontsize=20)
 
     # edit subplots
-    axes[0, 0].plot(stock["macds"], color="m", label="Signal Line")
-    axes[0, 0].legend(loc="lower right")
-    axes[0, 1].set_title('Subplot 1', fontsize=14)
-    axes[0, 1].plot(stock["macd"], color="y", label="MACD")
-    axes[0, 1].plot(stock["macds"], color="m", label="Signal Line")
-    axes[0, 1].legend(loc="lower right")
     
-    axes[1, 0].plot(stock["close_10_sma"], color="b", label="SMA")
-    axes[1, 0].plot(stock["close_12_ema"], color="r", label="EMA")
-    axes[1, 0].plot(stock["adj close"], color="g", label="Close prices")
-    axes[1, 0].legend(loc="lower right")
+    #subset.set_index(subset['Date'], inplace=True) 
+    #subset.index.name = 'Date'
+    #mpf.plot(subset,type='candle')
+    
+    #andlestick_ohlc(axes[0,0],subset)
+    axes[0, 0].plot(stock["macds"], color="m", label="Signal Line")    
+    #axes[0, 1].set_title('Subplot 1', fontsize=14)
+    axes[0, 0].plot(stock["macd"], color="y", label="MACD")
+    axes[0, 0].legend(loc="lower right",fontsize=14)
+    
+    axes[0, 1].plot(stock["close_10_sma"], color="b", label="SMA")
+    axes[0, 1].plot(stock["close_12_ema"], color="r", label="EMA")
+    axes[0, 1].plot(stock["adj close"], color="g", label="Close prices")
+    axes[0, 1].plot(stock['boll'], color="b", label="BBands")
+    axes[0, 1].plot(stock['boll_ub'], color="b", label="BBands")
+    axes[0, 1].plot(stock['boll_lb'], color="b", label="BBands")
+    axes[0, 1].plot(stock["adj close"], color="g", label="Close prices")
+    axes[0, 1].legend(loc="lower right",fontsize=14)
 
-    axes[1, 1].plot(cumulative_ret, label="Cum Ret")
-    axes[1, 1].legend(loc="lower right")
+    axes[1, 0].plot(cumulative_ret, label="Cum Ret")
+    axes[1, 0].legend(loc="lower right",fontsize=14)
     
-    axes[2, 0].plot(stock['rsi_14'], color="b", label="RSI_14")
-    axes[2, 0].legend(loc="lower right")
+    axes[1, 1].plot(stock['rsi_14'], color="b", label="RSI_14")
+    axes[1, 1].legend(loc="lower right",fontsize=14)
     #print(stock)
     
-    axes[2, 1].plot(stock['boll'], color="b", label="BBands")
-    axes[2, 1].plot(stock['boll_ub'], color="b", label="BBands")
-    axes[2, 1].plot(stock['boll_lb'], color="b", label="BBands")
-    axes[2, 1].plot(stock["adj close"], color="g", label="Close prices")
-    axes[2, 1].legend(loc="lower right")
-        
     #axes[2, 1].set_xlabel('cumret', fontsize=14)
     #axes[2, 1].set_title('', fontsize=14)
 
     plt.show()
-
-#!pip install fastquant
 
 pool3 = concurrent.futures.ProcessPoolExecutor()
 
