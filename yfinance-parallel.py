@@ -332,6 +332,7 @@ def stocks_table_function(**kwargs):
 
 tbl = stocks_table_function()
 
+
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
@@ -364,7 +365,17 @@ for i in vetted_symbols:
     subset.set_index(subset['Date'], inplace=True) 
     subset.index.name = 'Date'
 
-    #mpf.figure(), axes2 = fig.subplots()
+    ts = subset[["Date","Adj Close"]]
+    ts.columns = ['ds', 'y']
+    #print(ts)
+    m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
+    forecast = m.make_future_dataframe(periods=0, freq='D')
+    pred = m.predict(forecast)
+    df = stock
+    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
+    df["custom"] = expected_1day_return.multiply(-1)
+    fig1 = m.plot(pred)
+    plt.title('Prophet: Forecasted Daily Closing Price', fontsize=25)
 
     s = mpf.make_mpf_style(base_mpf_style='charles', rc={'font.size': 6}) # add your own style here
     fig = mpf.figure(figsize=(10, 7), style=s)
@@ -408,6 +419,7 @@ for i in vetted_symbols:
     #axes[2, 1].set_title('', fontsize=14)
 
     plt.show()
+
 
 pool3 = concurrent.futures.ProcessPoolExecutor()
 
@@ -465,12 +477,11 @@ for x in range(0,len(vetted_symbols)):
     res_opt = pd.DataFrame(futures_back[x].result())
     res_data = pd.concat([res_opt,res_data])
     
-vetted_symbols    
-    
 #vetted_symbols    
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 tbl
 
+print(vetted_symbols)
 
 strategies = list(res_data.strat_id.unique())
 strategies.sort()
