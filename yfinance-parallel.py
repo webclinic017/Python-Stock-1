@@ -25,6 +25,7 @@ from fastquant import backtest, get_stock_data
 import numpy as np
 import mplfinance as mpf
 import matplotlib.dates as mdates
+from fbprophet import Prophet
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
@@ -416,7 +417,8 @@ strats = {
     "rsi": {"rsi_lower": 30, "rsi_upper": 70},
     "macd": {"fast_period": 12, "slow_period": 26, "signal_period": 9, "sma_period": 30, "dir_period": 10},
     "bbands": {"period": 20, "devfactor": 2.0},
-    "ema": {"fast_period": 10, "slow_period": 30}
+    "ema": {"fast_period": 10, "slow_period": 30},
+    "custom": {"upper_limit": 1.5, "lower_limit":-1.5}
 } 
 
 strats_opt = { 
@@ -426,18 +428,32 @@ strats_opt = {
 }         
 
 def back_test(stock):
-    #print(stock)
+
     subset = stocks_data[stocks_data["Symbol"]==stock]
-    
+
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
-    #subset = subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]]    
-    #stock.columns = ['Date','open','high','low','close','adj close', 'volume']
+    #print(subset)
+    ts = subset[["Date","Adj Close"]]
+    ts.columns = ['ds', 'y']
+    #print(ts)
+    m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
+    forecast = m.make_future_dataframe(periods=0, freq='D')
+    pred = m.predict(forecast)
+    df = stock
+    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
+    df["custom"] = expected_1day_return.multiply(-1)
     #print(stock)
+
+    #backtest("custom", df.dropna())
+    
+    #backtest("multi", stock, stock.dropna())
     with contextlib.redirect_stdout(None):
         #print(stock)
-        b = backtest("multi", stock, strats=strats_opt)
-        
+        b = backtest("multi", df.dropna(), strats=strats_opt)
+        #b = backtest("multi", stock, stock.dropna(), strats=strats_opt)
+        #b = backtest("custom", stock["custom"], stock.dropna(), upper_limit=1.5, lower_limit=-1.5)
+
     return(b)
     
 futures_back = [pool3.submit(back_test, args) for args in vetted_symbols]
@@ -450,5 +466,30 @@ for x in range(0,len(vetted_symbols)):
     res_data = pd.concat([res_opt,res_data])
     
 vetted_symbols    
-res_data
+    
+#vetted_symbols    
+res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 tbl
+
+strategies = list(res_data.strat_id.unique())
+strategies.sort()
+
+#res_data.filter(like='bbi', axis=0)
+
+scores = []
+#scores = pd.DataFrame()
+
+for i in strategies:
+    #res_data.filter(like=i, axis=0)
+    filtered =  res_data['strat_id']==i
+    #print(i)
+    scores.append((res_data[filtered]["final_value"].mean()))
+    #scores = pd.concat(res_data[filtered]["final_value"].mean(),scores)
+    
+#scores.index.idxmax()
+index_min = min(range(len(scores)), key=scores.__getitem__)
+index_max = max(range(len(scores)), key=scores.__getitem__)
+
+#best strategy
+print("Best strategy ",index_max)
+res_data[res_data['strat_id']==index_max]
