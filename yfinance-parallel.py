@@ -471,6 +471,7 @@ vetted_symbols
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 tbl
 
+
 strategies = list(res_data.strat_id.unique())
 strategies.sort()
 
@@ -486,10 +487,13 @@ for i in strategies:
     scores.append((res_data[filtered]["final_value"].mean()))
     #scores = pd.concat(res_data[filtered]["final_value"].mean(),scores)
     
-#scores.index.idxmax()
-index_min = min(range(len(scores)), key=scores.__getitem__)
-index_max = max(range(len(scores)), key=scores.__getitem__)
+choice=index_max
 
-#best strategy
-print("Best strategy ",index_max)
-res_data[res_data['strat_id']==index_max]
+index_min = min(range(len(scores)), key=scores.__getitem__)
+index_max = max(range(len(scores)), key=scores.__getitem__)    
+
+filtered =  res_data['strat_id']==choice
+print(res_data[filtered]["final_value"].mean())
+
+print("Choice strategy ",choice)
+res_data[res_data['strat_id']==choice]
