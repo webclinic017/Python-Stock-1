@@ -333,6 +333,7 @@ def stocks_table_function(**kwargs):
 tbl = stocks_table_function()
 
 
+#cumulative returns
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
@@ -365,6 +366,7 @@ for i in vetted_symbols:
     subset.set_index(subset['Date'], inplace=True) 
     subset.index.name = 'Date'
 
+    #prophet
     ts = subset[["Date","Adj Close"]]
     ts.columns = ['ds', 'y']
     #print(ts)
@@ -374,9 +376,23 @@ for i in vetted_symbols:
     df = stock
     expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
     df["custom"] = expected_1day_return.multiply(-1)
-    fig1 = m.plot(pred)
+    m.plot(pred)
     plt.title('Prophet: Forecasted Daily Closing Price', fontsize=25)
 
+        #exponential smoothing VAMA
+        #a  = TA.EVWMA(subset)
+        #a.set_index(subset['Date'], inplace=True) 
+
+        #plt.plot(a)
+
+        #fit3 = SimpleExpSmoothing(a, initialization_method="estimated").fit()
+        #fcast3 = fit3.forecast(3).rename(r'$\alpha=%s$'%fit3.model.params['smoothing_level'])
+
+        #plt.plot(fit3.fittedvalues, marker='o', color='green')
+        #line3, = plt.plot(fcast3, marker='o', color='green')
+        #plt.legend([line3], [fcast3.name])
+
+    #weighted moving averages
     s = mpf.make_mpf_style(base_mpf_style='charles', rc={'font.size': 6}) # add your own style here
     fig = mpf.figure(figsize=(10, 7), style=s)
     ax = fig.add_subplot(2,1,1)
@@ -390,13 +406,7 @@ for i in vetted_symbols:
     # title for entire figure
     fig.suptitle(i, fontsize=20)
 
-    # edit subplots
-    
-    #subset.set_index(subset['Date'], inplace=True) 
-    #subset.index.name = 'Date'
-    #mpf.plot(subset,type='candle')
-    
-    #andlestick_ohlc(axes[0,0],subset)
+    #other technical
     axes[0, 0].plot(stock["macds"], color="m", label="Signal Line")    
     #axes[0, 1].set_title('Subplot 1', fontsize=14)
     axes[0, 0].plot(stock["macd"], color="y", label="MACD")
@@ -419,6 +429,7 @@ for i in vetted_symbols:
     #axes[2, 1].set_title('', fontsize=14)
 
     plt.show()
+
 
 
 pool3 = concurrent.futures.ProcessPoolExecutor()
