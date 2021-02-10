@@ -331,12 +331,21 @@ def stocks_table_function(**kwargs):
 
 tbl = stocks_table_function()
 
-#plt.show()
-#fig = plt.figure(figsize=(10, 10))
-#ax = plt.subplot()
-#plot_data = []
-#subset["Adj Close"]
+for i in vetted_symbols:
+    subset = stocks_data[stocks_data["Symbol"]==i]
+    stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
+    stock.BOLL_WINDOW = 20
+    stock.BOLL_STD_TIMES = 2
+    
+    price_data = stock["adj close"]
+    
+    ret_data = price_data.pct_change()[1:]
+    
+    cumulative_ret = (ret_data + 1).cumprod()
 
+    plt.plot(cumulative_ret, label=i)
+    plt.legend(loc="upper left",fontsize=8)
+    
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
@@ -383,15 +392,12 @@ for i in vetted_symbols:
     
     axes[0, 1].plot(stock["close_10_sma"], color="b", label="SMA")
     axes[0, 1].plot(stock["close_12_ema"], color="r", label="EMA")
-    axes[0, 1].plot(stock["adj close"], color="g", label="Close prices")
+    axes[0, 1].plot(stock["adj close"], color="g", label="Adj Close prices")
     axes[0, 1].plot(stock['boll'], color="b", label="BBands")
     axes[0, 1].plot(stock['boll_ub'], color="b", label="BBands")
     axes[0, 1].plot(stock['boll_lb'], color="b", label="BBands")
-    axes[0, 1].plot(stock["adj close"], color="g", label="Close prices")
+    axes[0, 1].plot(stock["adj close"], color="g", label="Adj Close prices")
     axes[0, 1].legend(loc="lower right",fontsize=14)
-
-    axes[1, 0].plot(cumulative_ret, label="Cum Ret")
-    axes[1, 0].legend(loc="lower right",fontsize=14)
     
     axes[1, 1].plot(stock['rsi_14'], color="b", label="RSI_14")
     axes[1, 1].legend(loc="lower right",fontsize=14)
