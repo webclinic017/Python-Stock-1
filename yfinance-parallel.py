@@ -349,6 +349,8 @@ for i in vetted_symbols:
     plt.plot(cumulative_ret, label=i)
     plt.legend(loc="upper left",fontsize=8)
     
+plt.show()
+
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
@@ -356,13 +358,7 @@ for i in vetted_symbols:
     stock.BOLL_STD_TIMES = 2
     
     price_data = stock["adj close"]
-    
-    ret_data = price_data.pct_change()[1:]
-    
-    cumulative_ret = (ret_data + 1).cumprod()
-    #cumulative_ret = np.cumprod(1 + ret_data.values) - 1
-    
-    subset = stocks_data[stocks_data["Symbol"]==vetted_symbols[1]]
+        
     subset.set_index(subset['Date'], inplace=True) 
     subset.index.name = 'Date'
 
@@ -379,18 +375,11 @@ for i in vetted_symbols:
     m.plot(pred)
     plt.title('Prophet: Forecasted Daily Closing Price', fontsize=25)
 
-        #exponential smoothing VAMA
-        #a  = TA.EVWMA(subset)
-        #a.set_index(subset['Date'], inplace=True) 
+    #exponential smoothing VAMA
+    a  = pd.DataFrame(TA.EVWMA(subset))
 
-        #plt.plot(a)
-
-        #fit3 = SimpleExpSmoothing(a, initialization_method="estimated").fit()
-        #fcast3 = fit3.forecast(3).rename(r'$\alpha=%s$'%fit3.model.params['smoothing_level'])
-
-        #plt.plot(fit3.fittedvalues, marker='o', color='green')
-        #line3, = plt.plot(fcast3, marker='o', color='green')
-        #plt.legend([line3], [fcast3.name])
+    fit3 = SimpleExpSmoothing(a, initialization_method="estimated").fit()
+    fcast3 = fit3.forecast(3).rename(r'$\alpha=%s$'%fit3.model.params['smoothing_level'])
 
     #weighted moving averages
     s = mpf.make_mpf_style(base_mpf_style='charles', rc={'font.size': 6}) # add your own style here
@@ -421,16 +410,23 @@ for i in vetted_symbols:
     axes[0, 1].plot(stock["adj close"], color="g", label="Adj Close prices")
     axes[0, 1].legend(loc="lower right",fontsize=14)
     
+    axes[1, 0].plot(a, color="b", label="Exp Smooth")
+    axes[1, 0].plot(fit3.fittedvalues, marker='o', color='green')
+    #line3, = axes[1, 0].plot(fcast3, marker='o', color='green')
+    #axes[1, 0].plot(fcast3, marker='o', color='orange')
+    #axes[1, 0].legend(loc="lower right", label=fcast3.name)
+    print(fcast3)
+    
     axes[1, 1].plot(stock['rsi_14'], color="b", label="RSI_14")
     axes[1, 1].legend(loc="lower right",fontsize=14)
+    
+    
     #print(stock)
     
     #axes[2, 1].set_xlabel('cumret', fontsize=14)
     #axes[2, 1].set_title('', fontsize=14)
 
     plt.show()
-
-
 
 pool3 = concurrent.futures.ProcessPoolExecutor()
 
