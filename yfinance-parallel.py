@@ -498,28 +498,27 @@ for i in top10percent["stock"]:
 
     plt.show()
 
-pool3 = concurrent.futures.ProcessPoolExecutor()
-
-# Utilize single set of parameters
 strats = { 
-    "smac": {"fast_period": 35, "slow_period": 50}, 
+    #"smac": {"fast_period": 35, "slow_period": 50}, 
     #"rsi": {"rsi_lower": 30, "rsi_upper": 70},
     #"macd": {"fast_period": 12, "slow_period": 26, "signal_period": 9, "sma_period": 30, "dir_period": 10},
     #"bbands": {"period": 20, "devfactor": 2.0},
-    "ema": {"fast_period": 10, "slow_period": 30},
+    #"ema": {"fast_period": 10, "slow_period": 30},
     "custom": {"upper_limit": 1.5, "lower_limit":-1.5}
 } 
 
 strats_opt = { 
-    "smac": {"fast_period": 35, "slow_period": [40, 50]}, 
+    #"smac": {"fast_period": 35, "slow_period": [40, 50]}, 
     #"emac": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]}, 
     #"rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
+    "custom": {"upper_limit": [1.5], "lower_limit":[-1.5]}
 }         
 
-def back_test(stock):
+pool3 = concurrent.futures.ProcessPoolExecutor()
 
-    subset = stocks_data[stocks_data["Symbol"]==stock][lookbackperiod:]
-
+def back_test(i):
+    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
+    
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
     #print(subset)
@@ -532,19 +531,25 @@ def back_test(stock):
     df = stock
     expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
     df["custom"] = expected_1day_return.multiply(-1)
-
+    
+    #b = backtest("multi", df.dropna())
     with contextlib.redirect_stdout(None):
-
         b = backtest("multi", df.dropna(), strats=strats_opt)
 
     return(b)
+    #print(b)
+    #print(df)
     
-futures_back = [pool3.submit(back_test, args) for args in list(top10percent["stock"])]
+    
+stocklist = list(top10percent["stock"])
+
+futures_back = [pool3.submit(back_test, args) for args in stocklist]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
 
+#print(futures_back)
 res_data = pd.DataFrame()
 #print(futures_back)
-for x in range(0,len(list(top10percent["stock"]))):
+for x in range(0,len(stocklist)):
     #print(x)
     res_opt = pd.DataFrame(futures_back[x].result())
     res_data = pd.concat([res_opt,res_data])
