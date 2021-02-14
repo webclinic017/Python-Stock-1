@@ -1,5 +1,5 @@
 !pip install --upgrade pip
-!pip install fbprophet
+#!pip install 
 
 import concurrent.futures
 import urllib
@@ -9,7 +9,7 @@ import stat
 import contextlib
 import functools
 
-!pip install pip install datetime yfinance pandas pandas_market_calendars pandas_datareader mpl-finance stockstats matplotlib fastquant numpy stockstats cryptography mplfinance plotly
+!pip install datetime yfinance pandas pandas_market_calendars pandas_datareader mpl-finance stockstats matplotlib fastquant numpy stockstats cryptography mplfinance plotly finta fbprophet
 
 from concurrent.futures import wait, ALL_COMPLETED
 import urllib.request
@@ -33,13 +33,16 @@ import numpy as np
 import mplfinance as mpf
 import matplotlib.dates as mdates
 from fbprophet import Prophet
+from finta import TA
+from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
+%matplotlib inline
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
 
 cores = int(len(os.sched_getaffinity(0))/2)
 
-pool1 = concurrent.futures.ProcessPoolExecutor(cores)
+pool1 = concurrent.futures.ProcessPoolExecutor()
 
 end = datetime.date.today()
 start = end - timedelta(weeks=117)
@@ -112,7 +115,7 @@ stocks_data_one_week
 #stocks that existed 9 quarters ago
 vetted_symbols = list(stocks_data_one_week.Symbol.unique())
 
-pool2 = concurrent.futures.ProcessPoolExecutor(cores)
+pool2 = concurrent.futures.ProcessPoolExecutor()
 
 def dl(stock):
     return yf.download(stock, start=start, end=end).iloc[:, :6].dropna(axis=0, how='any')
@@ -418,9 +421,8 @@ for i in bottom10percent["stock"]:
     plt.plot(cumulative_ret, label=i)
     plt.legend(loc="upper left",fontsize=8)
     
-
-for i in vetted_symbols:
-    subset = stocks_data[stocks_data["Symbol"]==i]
+for i in top10percent["stock"]:
+    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
     stock.BOLL_WINDOW = 20
     stock.BOLL_STD_TIMES = 2
@@ -496,27 +498,27 @@ for i in vetted_symbols:
 
     plt.show()
 
-pool3 = concurrent.futures.ProcessPoolExecutor(cores)
+pool3 = concurrent.futures.ProcessPoolExecutor()
 
 # Utilize single set of parameters
 strats = { 
     "smac": {"fast_period": 35, "slow_period": 50}, 
-    "rsi": {"rsi_lower": 30, "rsi_upper": 70},
-    "macd": {"fast_period": 12, "slow_period": 26, "signal_period": 9, "sma_period": 30, "dir_period": 10},
-    "bbands": {"period": 20, "devfactor": 2.0},
+    #"rsi": {"rsi_lower": 30, "rsi_upper": 70},
+    #"macd": {"fast_period": 12, "slow_period": 26, "signal_period": 9, "sma_period": 30, "dir_period": 10},
+    #"bbands": {"period": 20, "devfactor": 2.0},
     "ema": {"fast_period": 10, "slow_period": 30},
     "custom": {"upper_limit": 1.5, "lower_limit":-1.5}
 } 
 
 strats_opt = { 
     "smac": {"fast_period": 35, "slow_period": [40, 50]}, 
-    "emac": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]}, 
-    "rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
+    #"emac": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]}, 
+    #"rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
 }         
 
 def back_test(stock):
 
-    subset = stocks_data[stocks_data["Symbol"]==stock]
+    subset = stocks_data[stocks_data["Symbol"]==stock][lookbackperiod:]
 
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
@@ -530,32 +532,25 @@ def back_test(stock):
     df = stock
     expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
     df["custom"] = expected_1day_return.multiply(-1)
-    #print(stock)
 
-    #backtest("custom", df.dropna())
-    
-    #backtest("multi", stock, stock.dropna())
     with contextlib.redirect_stdout(None):
-        #print(stock)
+
         b = backtest("multi", df.dropna(), strats=strats_opt)
-        #b = backtest("multi", stock, stock.dropna(), strats=strats_opt)
-        #b = backtest("custom", stock["custom"], stock.dropna(), upper_limit=1.5, lower_limit=-1.5)
 
     return(b)
     
-futures_back = [pool3.submit(back_test, args) for args in vetted_symbols]
+futures_back = [pool3.submit(back_test, args) for args in list(top10percent["stock"])]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
 
 res_data = pd.DataFrame()
-
-for x in range(0,len(vetted_symbols)):
+#print(futures_back)
+for x in range(0,len(list(top10percent["stock"]))):
+    #print(x)
     res_opt = pd.DataFrame(futures_back[x].result())
     res_data = pd.concat([res_opt,res_data])
-    
-#vetted_symbols    
-res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
-tbl
 
+res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
+res_data
 
 strategies = list(res_data.strat_id.unique())
 strategies.sort()
@@ -572,10 +567,10 @@ for i in strategies:
     scores.append((res_data[filtered]["final_value"].mean()))
     #scores = pd.concat(res_data[filtered]["final_value"].mean(),scores)
     
-choice=index_max
-
 index_min = min(range(len(scores)), key=scores.__getitem__)
 index_max = max(range(len(scores)), key=scores.__getitem__)    
+
+choice=index_max
 
 filtered =  res_data['strat_id']==choice
 print(res_data[filtered]["final_value"].mean())
