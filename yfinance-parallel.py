@@ -391,8 +391,6 @@ print(bottom10percent)
 for i in top10percent["stock"]:
     subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
-    stock.BOLL_WINDOW = 20
-    stock.BOLL_STD_TIMES = 2
     
     price_data = stock["adj close"]
     
@@ -409,8 +407,6 @@ plt.show()
 for i in bottom10percent["stock"]:
     subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
-    stock.BOLL_WINDOW = 20
-    stock.BOLL_STD_TIMES = 2
     
     price_data = stock["adj close"]
     
@@ -536,13 +532,14 @@ def back_test(i):
     
     #b = backtest("multi", df.dropna())
     with contextlib.redirect_stdout(None):
-        b = backtest("multi", df.dropna(), strats=strats_opt)
+        b = backtest("multi", df.dropna(), strats=strats_opt,return_history=True)
 
     return(b)
     #print(b)
     #print(df)
     
 stocklist = list(top10percent["stock"])
+print(stocklist)
 
 futures_back = [pool3.submit(back_test, args) for args in stocklist]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
@@ -583,3 +580,37 @@ print(res_data[filtered]["final_value"].mean())
 
 print("Choice strategy ",choice)
 res_data[res_data['strat_id']==choice]
+
+#show performance
+
+for i in range(0,len(stocklist)):
+    #print(res[i])
+    res_data = res[i][1]
+    #print(res[i][1]['orders'][res[i][1]['orders']['strat_id']==choice])
+    print(res_data['orders'][res_data['orders']['strat_id']==choice])
+    #values = res_data['periodic']['portfolio_value']
+    values = res_data['periodic'][res_data['periodic']['strat_id']==choice]['portfolio_value']
+    print(len(values))
+    ret_value = values.pct_change()[1:]
+    cumulative_ret_value = (ret_value + 1).cumprod()
+    
+    #cumulative_ret_value.reset_index()
+    
+    subset = stocks_data[stocks_data["Symbol"]==stocklist[i]][lookbackperiod:]
+    
+    #print(len(subset))
+    
+    price_data = subset["Adj Close"]
+    #print(price_data)
+    
+    og_ret_data = price_data.pct_change()[1:]
+    cumulative_og_ret_data = (og_ret_data + 1).cumprod()
+    
+    #cumulative_og_ret_data.reset_index()
+    cumulative_og_ret_data.reset_index(drop=True, inplace=True)
+    #print(cumulative_og_ret_data.index)
+    
+    plt.plot(cumulative_ret_value)
+    plt.plot(cumulative_og_ret_data)
+    plt.show()
+    
