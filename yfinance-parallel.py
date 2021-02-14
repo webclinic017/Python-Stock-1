@@ -508,9 +508,11 @@ strats = {
 } 
 
 strats_opt = { 
-    #"smac": {"fast_period": 35, "slow_period": [40, 50]}, 
-    #"emac": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]}, 
-    #"rsi": {"rsi_lower": [15, 30], "rsi_upper": 70} 
+    #"smac": {"fast_period": [35, 50], "slow_period": [100, 200]}, 
+    #"rsi": {"rsi_lower": [15, 30], "rsi_upper": [70, 85]},
+    #"macd": {"fast_period": [12], "slow_period": [26], "signal_period": [9], "sma_period": [30], "dir_period": [10]},
+    #"bbands": {"period": [20], "devfactor": [2.0]},
+    #"ema": {"fast_period": [9,10,12], "slow_period": [30, 40, 50]},     
     "custom": {"upper_limit": [1.5], "lower_limit":[-1.5]}
 }         
 
@@ -539,7 +541,6 @@ def back_test(i):
     return(b)
     #print(b)
     #print(df)
-    
     
 stocklist = list(top10percent["stock"])
 
