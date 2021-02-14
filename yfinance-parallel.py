@@ -1,17 +1,25 @@
-from concurrent.futures import wait, ALL_COMPLETED
+!pip install --upgrade pip
+!pip install fbprophet
 
-import urllib.request
 import concurrent.futures
+import urllib
+import re
+import time
+import stat
+import contextlib
+import functools
+
+!pip install pip install datetime yfinance pandas pandas_market_calendars pandas_datareader mpl-finance stockstats matplotlib fastquant numpy stockstats cryptography mplfinance plotly
+
+from concurrent.futures import wait, ALL_COMPLETED
+import urllib.request
 import datetime
 from datetime import timedelta
 import yfinance as yf
 import pandas as pd
 import pandas_market_calendars as mcal
-import re
 import os.path
 from os import path
-import time
-import stat
 from datetime import date
 from functools import reduce
 #import pandas-datareader
@@ -19,7 +27,6 @@ from functools import reduce
 import stockstats
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import contextlib
 from stockstats import StockDataFrame
 from fastquant import backtest, get_stock_data
 import numpy as np
@@ -30,7 +37,9 @@ from fbprophet import Prophet
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
 
-pool1 = concurrent.futures.ProcessPoolExecutor()
+cores = int(len(os.sched_getaffinity(0))/2)
+
+pool1 = concurrent.futures.ProcessPoolExecutor(cores)
 
 end = datetime.date.today()
 start = end - timedelta(weeks=117)
@@ -103,7 +112,7 @@ stocks_data_one_week
 #stocks that existed 9 quarters ago
 vetted_symbols = list(stocks_data_one_week.Symbol.unique())
 
-pool2 = concurrent.futures.ProcessPoolExecutor()
+pool2 = concurrent.futures.ProcessPoolExecutor(cores)
 
 def dl(stock):
     return yf.download(stock, start=start, end=end).iloc[:, :6].dropna(axis=0, how='any')
@@ -332,10 +341,52 @@ def stocks_table_function(**kwargs):
 
 tbl = stocks_table_function()
 
+returnsdf = pd.DataFrame()
+returnsl = []
 
-#cumulative returns
+half = int(len(official_trading_dates)/2)
+
+w = 117
+
+#lookbackperiod = half
+#weeks - 52 * 252 trading days a year / 52 = # of trading days
+lookbackperiod = int((w-52)*252/52)
+
+#cumulative returns of 1st half
 for i in vetted_symbols:
-    subset = stocks_data[stocks_data["Symbol"]==i]
+    subset = stocks_data[stocks_data["Symbol"]==i][1:lookbackperiod]
+    #print(subset)
+    price_data = subset["Adj Close"]
+    #print(price_data)
+    
+    ret_data = price_data.pct_change()[1:]
+    
+    cumulative_ret = (ret_data + 1).cumprod()
+    
+    last = cumulative_ret[len(cumulative_ret)]
+    
+    #pd.concat(last,returns)
+    returnsl.append(last)
+
+    #plt.plot(cumulative_ret, label=i)
+    #plt.legend(loc="upper left",fontsize=8)
+    
+returnsdf["returns"] = returnsl
+returnsdf["stock"] = vetted_symbols
+
+tenpercent = int(len(vetted_symbols)*.1)
+
+top10percent = returnsdf.sort_values(by=['returns'], ascending=False)[1:tenpercent]
+
+bottom10percent = returnsdf.sort_values(by=['returns'], ascending=True)[1:tenpercent]
+
+print(top10percent)
+print(bottom10percent)
+#returnsdf
+
+#cumulative returns past lookbackperiod
+for i in top10percent["stock"]:
+    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
     stock.BOLL_WINDOW = 20
     stock.BOLL_STD_TIMES = 2
@@ -350,6 +401,23 @@ for i in vetted_symbols:
     plt.legend(loc="upper left",fontsize=8)
     
 plt.show()
+
+#cumulative returns past lookbackperiod
+for i in bottom10percent["stock"]:
+    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
+    stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
+    stock.BOLL_WINDOW = 20
+    stock.BOLL_STD_TIMES = 2
+    
+    price_data = stock["adj close"]
+    
+    ret_data = price_data.pct_change()[1:]
+    
+    cumulative_ret = (ret_data + 1).cumprod()
+
+    plt.plot(cumulative_ret, label=i)
+    plt.legend(loc="upper left",fontsize=8)
+    
 
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
@@ -428,7 +496,7 @@ for i in vetted_symbols:
 
     plt.show()
 
-pool3 = concurrent.futures.ProcessPoolExecutor()
+pool3 = concurrent.futures.ProcessPoolExecutor(cores)
 
 # Utilize single set of parameters
 strats = { 
@@ -488,7 +556,6 @@ for x in range(0,len(vetted_symbols)):
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 tbl
 
-print(vetted_symbols)
 
 strategies = list(res_data.strat_id.unique())
 strategies.sort()
