@@ -347,7 +347,7 @@ def back_test(i):
     
     #b = backtest("multi", df.dropna())
     with contextlib.redirect_stdout(None):
-        b = backtest("multi", df.dropna(), strats=strats_opt,return_history=True)
+        b = backtest("multi", df.dropna(), strats=strats_opt, return_history=True, buy_prop=0.10, sell_prop=1,commission=0.01, init_cash=1000)
 
     return(b)
     #print(b)
