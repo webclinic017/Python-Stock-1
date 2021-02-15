@@ -417,7 +417,10 @@ for i in bottom10percent["stock"]:
     plt.plot(cumulative_ret, label=i)
     plt.legend(loc="upper left",fontsize=8)
     
-for i in top10percent["stock"]:
+stocklist = list(top10percent["stock"])
+print(stocklist)	
+	
+for i in stocklist:
     subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
     stock.BOLL_WINDOW = 20
@@ -432,7 +435,11 @@ for i in top10percent["stock"]:
     ts = subset[["Date","Adj Close"]]
     ts.columns = ['ds', 'y']
     #print(ts)
-    m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
+    #m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
+    m = Prophet(daily_seasonality=True)
+    m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+    m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
+    m.fit(ts)
     forecast = m.make_future_dataframe(periods=0, freq='D')
     pred = m.predict(forecast)
     df = stock
@@ -486,7 +493,6 @@ for i in top10percent["stock"]:
     axes[1, 1].plot(stock['rsi_14'], color="b", label="RSI_14")
     axes[1, 1].legend(loc="lower right",fontsize=14)
     
-    
     #print(stock)
     
     #axes[2, 1].set_xlabel('cumret', fontsize=14)
@@ -523,7 +529,10 @@ def back_test(i):
     ts = subset[["Date","Adj Close"]]
     ts.columns = ['ds', 'y']
     #print(ts)
-    m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
+    m = Prophet(daily_seasonality=True)
+    m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+    m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
+    m.fit(ts)
     forecast = m.make_future_dataframe(periods=0, freq='D')
     pred = m.predict(forecast)
     df = stock
@@ -537,20 +546,18 @@ def back_test(i):
     return(b)
     #print(b)
     #print(df)
-    
-stocklist = list(top10percent["stock"])
-print(stocklist)
 
 futures_back = [pool3.submit(back_test, args) for args in stocklist]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
 
-#print(futures_back)
-res_data = pd.DataFrame()
-#print(futures_back)
+res = []
 for x in range(0,len(stocklist)):
-    #print(x)
-    res_opt = pd.DataFrame(futures_back[x].result())
-    res_data = pd.concat([res_opt,res_data])
+    res.append(futures_back[x].result())
+    
+res_data = pd.DataFrame()    
+for i in range(0,len(res)):
+    res_data = pd.concat([res[i][0],res_data])
+    
 
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 res_data
