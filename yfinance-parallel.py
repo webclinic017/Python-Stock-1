@@ -254,7 +254,7 @@ for i in stocklist:
     a  = pd.DataFrame(TA.EVWMA(subset))
 
     fit3 = SimpleExpSmoothing(a, initialization_method="estimated").fit()
-    fcast3 = fit3.forecast(3).rename(r'$\alpha=%s$'%fit3.model.params['smoothing_level'])
+    fcast3 = fit3.forecast(1).rename(r'$\alpha=%s$'%fit3.model.params['smoothing_level'])
 
     #weighted moving averages
     s = mpf.make_mpf_style(base_mpf_style='charles', rc={'font.size': 6}) # add your own style here
@@ -391,7 +391,7 @@ filtered =  res_data['strat_id']==choice
 print(res_data[filtered]["final_value"].mean())
 
 print("Choice strategy ",choice)
-res_data[res_data['strat_id']==choice]
+res_data[res_data['strat_id']==choice].round(2)
 
 #show performance
 
@@ -463,4 +463,4 @@ all_result_df.dropna(axis=0, how='any')
 all_result_df['Symbol'] = stocklist
 # Save all results
 all_result_df.to_csv('results.csv', index =False)
-all_result_df    
+all_result_df.round(2))
