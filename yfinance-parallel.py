@@ -14,7 +14,7 @@ import stat
 import contextlib
 import functools
 
-!pip install datetime yfinance pandas pandas_market_calendars pandas_datareader mpl-finance stockstats matplotlib fastquant numpy stockstats cryptography mplfinance plotly finta fbprophet
+!pip install datetime yfinance pandas pandas_market_calendars pandas_datareader mpl-finance stockstats matplotlib fastquant numpy stockstats cryptography mplfinance plotly finta fbprophet tabulate
 
 from concurrent.futures import wait, ALL_COMPLETED
 import urllib.request
@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from stockstats import StockDataFrame
 from fastquant import backtest, get_stock_data
 import numpy as np
+import tabulate
 import mplfinance as mpf
 import matplotlib.dates as mdates
 from fbprophet import Prophet
@@ -49,8 +50,12 @@ cores = int(len(os.sched_getaffinity(0))/2)
 
 pool1 = concurrent.futures.ProcessPoolExecutor()
 
+w = 117
+
 end = datetime.date.today()
-start = end - timedelta(weeks=117)
+start = end - timedelta(weeks=w)
+
+start2 = end - timedelta(weeks=52)
 
 one_week_end = start
 one_week_start = one_week_end - timedelta(weeks=1)
@@ -59,7 +64,21 @@ one_week_start = one_week_end - timedelta(weeks=1)
 
 nyse = mcal.get_calendar('NYSE')
 official_trading_dates= nyse.schedule(start_date=start, end_date=end)
+
+#date_time_obj_start = datetime.datetime.strptime(start, '%Y-%m-%d')
+date_time_obj_start = start
+#date_time_obj_end = datetime.datetime.strptime(end, '%Y-%m-%d')
+date_time_obj_end = end
+
+official_trading_dates_plus5= nyse.schedule(start_date=date_time_obj_start.strftime('%Y-%m-%d'), end_date=date_time_obj_end+timedelta(days=5))
+
+next_trading_day = official_trading_dates_plus5.index[official_trading_dates_plus5.index > end.strftime('%m/%d/%Y')][0]
+
 idx2 = official_trading_dates.index
+
+#type(next_trading_day)
+#used for forecast only
+idx3 = official_trading_dates_plus5.index[(official_trading_dates_plus5.index >= start.strftime('%Y-%m-%d')) & (official_trading_dates_plus5.index <= next_trading_day.strftime('%Y-%m-%d'))]
 
 one_week_trading_dates = nyse.schedule(start_date=one_week_start, end_date=one_week_end)
 
@@ -96,7 +115,7 @@ pat = '|'.join(['({})'.format(re.escape(c)) for c in BAD_CHARS])
 df = df[~df['Symbol'].str.contains(pat)]
 
 #choose size
-size=10
+size=100
 stocks = list(df["Symbol"].sample(n=size))
 
 def dl_one_week(stock):
@@ -120,7 +139,7 @@ stocks_data_one_week
 #stocks that existed 9 quarters ago
 vetted_symbols = list(stocks_data_one_week.Symbol.unique())
 
-pool2 = concurrent.futures.ProcessPoolExecutor()
+pool2 = concurrent.futures.ProcessPoolExecutor(cores)
 
 def dl(stock):
     return yf.download(stock, start=start, end=end).iloc[:, :6].dropna(axis=0, how='any')
@@ -220,16 +239,18 @@ for i in bottom10percent["stock"]:
     plt.legend(loc="upper left",fontsize=8)
     
 stocklist = list(top10percent["stock"])
-print(stocklist)	
+print(stocklist)
 	
 for i in stocklist:
-    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
+
+    subset = stocks_data[stocks_data["Symbol"]==i]
+    #[lookbackperiod:]
     stock = StockDataFrame.retype(subset[["Date","Open", "Close", "Adj Close", "High", "Low", "Volume"]])
     stock.BOLL_WINDOW = 20
     stock.BOLL_STD_TIMES = 2
-    
+
     price_data = stock["adj close"]
-        
+
     subset.set_index(subset['Date'], inplace=True) 
     subset.index.name = 'Date'
 
@@ -238,16 +259,31 @@ for i in stocklist:
     ts.columns = ['ds', 'y']
     #print(ts)
     #m = Prophet(daily_seasonality=True, yearly_seasonality=True).fit(ts)
-    m = Prophet(daily_seasonality=True)
+    m = Prophet(daily_seasonality=True,yearly_seasonality=True)
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
     m.fit(ts)
     forecast = m.make_future_dataframe(periods=0, freq='D')
+    forecast = pd.DataFrame(idx3)
+    forecast.columns = ['ds']
+
+    # Predict and plot
     pred = m.predict(forecast)
+
     df = stock
+    idx1 = df.index  
+    #create entry for next trading day (i.e. idx3)
+    merged = idx1.union(idx3)
+
     expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
     df["custom"] = expected_1day_return.multiply(-1)
-    m.plot(pred)
+
+    newdf = df.reindex(merged)
+
+    df = newdf
+    #print(df)
+
+    m.plot(pred[lookbackperiod:])
     plt.title('Prophet: Forecasted Daily Closing Price', fontsize=25)
 
     #exponential smoothing VAMA
@@ -262,8 +298,8 @@ for i in stocklist:
     ax = fig.add_subplot(2,1,1)
     av = fig.add_subplot(2,1,2, sharex=ax)
     #az = fig.add_subplot(3,1,1)
-    mpf.plot(subset,type='candle',mav=(3,6,9),volume=av,show_nontrading=True, ax=ax)
-    
+    mpf.plot(subset[lookbackperiod:],type='candle',mav=(3,6,9),volume=av,show_nontrading=True, ax=ax)
+
     my_dpi = 50
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), dpi=my_dpi)
 
@@ -271,37 +307,45 @@ for i in stocklist:
     fig.suptitle(i, fontsize=20)
 
     #other technical
-    axes[0, 0].plot(stock["macds"], color="m", label="Signal Line")    
+    axes[0, 0].plot(stock[lookbackperiod:]["macds"], color="m", label="Signal Line")    
     #axes[0, 1].set_title('Subplot 1', fontsize=14)
-    axes[0, 0].plot(stock["macd"], color="y", label="MACD")
+    axes[0, 0].plot(stock[lookbackperiod:]["macd"], color="y", label="MACD")
     axes[0, 0].legend(loc="lower right",fontsize=14)
-    
-    axes[0, 1].plot(stock["close_10_sma"], color="b", label="SMA")
-    axes[0, 1].plot(stock["close_12_ema"], color="r", label="EMA")
-    axes[0, 1].plot(stock["adj close"], color="g", label="Adj Close prices")
-    axes[0, 1].plot(stock['boll'], color="b", label="BBands")
-    axes[0, 1].plot(stock['boll_ub'], color="b", label="BBands")
-    axes[0, 1].plot(stock['boll_lb'], color="b", label="BBands")
-    axes[0, 1].plot(stock["adj close"], color="g", label="Adj Close prices")
+
+    axes[0, 1].plot(stock[lookbackperiod:]["close_10_sma"], color="b", label="SMA")
+    axes[0, 1].plot(stock[lookbackperiod:]["close_12_ema"], color="r", label="EMA")
+    axes[0, 1].plot(stock[lookbackperiod:]["adj close"], color="g", label="Adj Close prices")
+    axes[0, 1].plot(stock[lookbackperiod:]['boll'], color="b", label="BBands")
+    axes[0, 1].plot(stock[lookbackperiod:]['boll_ub'], color="b", label="BBands")
+    axes[0, 1].plot(stock[lookbackperiod:]['boll_lb'], color="b", label="BBands")
+    axes[0, 1].plot(stock[lookbackperiod:]["adj close"], color="g", label="Adj Close prices")
     axes[0, 1].legend(loc="lower right",fontsize=14)
-    
+
     axes[1, 0].plot(a, color="b", label="Exp Smooth")
-    axes[1, 0].plot(fit3.fittedvalues, marker='o', color='green')
+    axes[1, 0].plot(fit3.fittedvalues[lookbackperiod:], marker='o', color='green')
     #line3, = axes[1, 0].plot(fcast3, marker='o', color='green')
     #axes[1, 0].plot(fcast3, marker='o', color='orange')
     #axes[1, 0].legend(loc="lower right", label=fcast3.name)
+    #print(pred[len(pred)])
+    #print(df["custom"])
+	print("VAMA forecast")
     print(fcast3)
-    
-    axes[1, 1].plot(stock['rsi_14'], color="b", label="RSI_14")
+    print("fbprophet price forecast")
+    #print(pred[len(pred)-1:][['ds','yhat']])
+    print(pred[-1:][['ds','yhat']])
+    print("expected return")    
+    print(pred['yhat'].pct_change()[-1:])
+
+    axes[1, 1].plot(stock[lookbackperiod:]['rsi_14'], color="b", label="RSI_14")
     axes[1, 1].legend(loc="lower right",fontsize=14)
-    
+
     #print(stock)
-    
+
     #axes[2, 1].set_xlabel('cumret', fontsize=14)
     #axes[2, 1].set_title('', fontsize=14)
 
     plt.show()
-
+	
 strats = { 
     #"smac": {"fast_period": 35, "slow_period": 50}, 
     #"rsi": {"rsi_lower": 30, "rsi_upper": 70},
@@ -327,7 +371,8 @@ strats_opt = {
 pool3 = concurrent.futures.ProcessPoolExecutor()
 
 def back_test(i):
-    subset = stocks_data[stocks_data["Symbol"]==i][lookbackperiod:]
+    subset = stocks_data[stocks_data["Symbol"]==i]
+    #[lookbackperiod:]
     
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
@@ -335,16 +380,33 @@ def back_test(i):
     ts = subset[["Date","Adj Close"]]
     ts.columns = ['ds', 'y']
     #print(ts)
-    m = Prophet(daily_seasonality=True)
+    m = Prophet(daily_seasonality=True,yearly_seasonality=True)
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
     m.fit(ts)
     forecast = m.make_future_dataframe(periods=0, freq='D')
+    forecast = pd.DataFrame(idx3)
+    forecast.columns = ['ds']
+
+    # Predict and plot
     pred = m.predict(forecast)
-    df = stock
-    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
-    df["custom"] = expected_1day_return.multiply(-1)
+
+    dfpre = stock
+    idx1 = dfpre.index  
+    #create entry for next trading day (i.e. idx3)
+    merged = idx1.union(idx3)
     
+    newdf = dfpre.reindex(merged)
+
+    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
+    newdf["custom"] = expected_1day_return.multiply(-1)
+
+    df = newdf
+    
+    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
+    dfpre["custom"] = expected_1day_return.multiply(-1)
+    #df = dfpre[(dfpre['Date']> "2018-01-01") & (df['Date']<= end)]
+    df = dfpre[lookbackperiod:]
     #b = backtest("multi", df.dropna())
     with contextlib.redirect_stdout(None):
         b = backtest("multi", df.dropna(), strats=strats_opt, return_history=True, buy_prop=0.10, sell_prop=1,commission=0.01, init_cash=1000)
@@ -364,8 +426,11 @@ res_data = pd.DataFrame()
 for i in range(0,len(res)):
     res_data = pd.concat([res[i][0],res_data])
     
+    
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 res_data
+
+#top10percent symbols
 
 strategies = list(res_data.strat_id.unique())
 strategies.sort()
