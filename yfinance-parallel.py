@@ -373,10 +373,10 @@ pool3 = concurrent.futures.ProcessPoolExecutor()
 def back_test(i):
     subset = stocks_data[stocks_data["Symbol"]==i]
     #[lookbackperiod:]
-    
+
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
-    
+
     #EVWMA
     Short_EVWMA = pd.DataFrame(TA.EVWMA(subset,9))
     Signal_EVWMA = pd.DataFrame(TA.EVWMA(subset,12))
@@ -402,8 +402,13 @@ def back_test(i):
     forecast = pd.DataFrame(idx3)
     forecast.columns = ['ds']
 
+    #forecast2 = pd.DataFrame(df.index)[lookbackperiod:lookbackperiod+50:]
+    #forecast2.columns = ['ds']
+
     # Predict and plot
     pred = m.predict(forecast)
+
+    #pred2 = m.predict(forecast2)
 
     dfpre = stock
     idx1 = dfpre.index  
@@ -423,11 +428,18 @@ def back_test(i):
 
     #df = dfpre[(dfpre['Date']> "2018-01-01") & (df['Date']<= end)]
     df = newdf[lookbackperiod:]
-    
+
+    delta = len(pred.set_index('ds')['yhat'][lookbackperiod:])-len(df['close'].dropna())
+    rmse = mean_squared_error(df['close'].dropna(), pred.set_index('ds')['yhat'][lookbackperiod+delta:], squared=True)
+    mape = MAPE(df['close'].dropna(),pred.set_index('ds')['yhat'][lookbackperiod+2:])
+
+    #df["custom"] = (((pred.set_index('ds')['yhat']-ts.set_index('ds')['y'])/ts.set_index('ds')['y']).multiply(-1))[lookbackperiod:]
+
     with contextlib.redirect_stdout(None):
         b = backtest("multi", df.dropna(), strats=strats_opt, return_history=True, buy_prop=0.10, sell_prop=1,commission=0.01, init_cash=1000)
 
-    return(b)
+    r = [(b, rmse, mape, i)]
+    return (r)
 
 futures_back = [pool3.submit(back_test, args) for args in stocklist]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
@@ -438,7 +450,8 @@ for x in range(0,len(stocklist)):
     
 res_data = pd.DataFrame()    
 for i in range(0,len(res)):
-    res_data = pd.concat([res[i][0],res_data])
+    res_data = pd.concat([res[i][0][0][0],res_data])
+    
     
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 res_data
