@@ -263,7 +263,7 @@ for i in stocklist:
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
     m.fit(ts)
-    forecast = m.make_future_dataframe(periods=0, freq='D')
+    #forecast = m.make_future_dataframe(periods=0, freq='D')
     forecast = pd.DataFrame(idx3)
     forecast.columns = ['ds']
 
@@ -376,15 +376,29 @@ def back_test(i):
     
     #converts date to datetime
     stock = StockDataFrame.retype(subset[["Date","Open", "High", "Low", "Close", "Adj Close", "Volume"]])
-    #print(subset)
+    
+    #EVWMA
+    Short_EVWMA = pd.DataFrame(TA.EVWMA(subset,9))
+    Signal_EVWMA = pd.DataFrame(TA.EVWMA(subset,12))
+    Long_EVWMA = pd.DataFrame(TA.EVWMA(subset,26))
+    ATR = pd.DataFrame(TA.ATR(subset))
+    Short_EVWMA.columns = ['EVWMA_9']
+    Signal_EVWMA.columns = ['EVWMA_12']
+    Long_EVWMA.columns = ['EVWMA_26']
+    ATR.columns = ['ATR']
+    MACD_EVWMA = pd.DataFrame(Long_EVWMA['EVWMA_26'] - Short_EVWMA['EVWMA_9'])
+    MACD_EVWMA.columns = ['Signal']
+
+    #Adj Close
     ts = subset[["Date","Adj Close"]]
     ts.columns = ['ds', 'y']
+
     #print(ts)
     m = Prophet(daily_seasonality=True,yearly_seasonality=True)
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
     m.fit(ts)
-    forecast = m.make_future_dataframe(periods=0, freq='D')
+    #forecast = m.make_future_dataframe(periods=0, freq='D')
     forecast = pd.DataFrame(idx3)
     forecast.columns = ['ds']
 
@@ -395,25 +409,25 @@ def back_test(i):
     idx1 = dfpre.index  
     #create entry for next trading day (i.e. idx3)
     merged = idx1.union(idx3)
-    
+
     newdf = dfpre.reindex(merged)
 
+    #A. fbprophet return
     expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
     newdf["custom"] = expected_1day_return.multiply(-1)
 
-    df = newdf
-    
-    expected_1day_return = pred.set_index("ds").yhat.pct_change().shift(-1).multiply(100)
-    dfpre["custom"] = expected_1day_return.multiply(-1)
+    #B. no fbprophet
+    #newdf['custom'] = ts.set_index('ds')
+    #fbprophet
+    #newdf["custom"] = pred.set_index('ds')['yhat']
+
     #df = dfpre[(dfpre['Date']> "2018-01-01") & (df['Date']<= end)]
-    df = dfpre[lookbackperiod:]
-    #b = backtest("multi", df.dropna())
+    df = newdf[lookbackperiod:]
+    
     with contextlib.redirect_stdout(None):
         b = backtest("multi", df.dropna(), strats=strats_opt, return_history=True, buy_prop=0.10, sell_prop=1,commission=0.01, init_cash=1000)
 
     return(b)
-    #print(b)
-    #print(df)
 
 futures_back = [pool3.submit(back_test, args) for args in stocklist]
 wait(futures_back, timeout=None, return_when=ALL_COMPLETED)
@@ -425,7 +439,6 @@ for x in range(0,len(stocklist)):
 res_data = pd.DataFrame()    
 for i in range(0,len(res)):
     res_data = pd.concat([res[i][0],res_data])
-    
     
 res_data.to_csv(start.strftime('%Y-%m-%d')+'-'+end.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'res_backtest_data.csv', index = False)
 res_data
