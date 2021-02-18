@@ -262,7 +262,7 @@ for i in stocklist:
     m = Prophet(daily_seasonality=True,yearly_seasonality=True)
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
-    m.fit(ts)
+    m.fit(ts[lookbackperiod:])
     #forecast = m.make_future_dataframe(periods=0, freq='D')
     forecast = pd.DataFrame(idx3)
     forecast.columns = ['ds']
@@ -397,7 +397,7 @@ def back_test(i):
     m = Prophet(daily_seasonality=True,yearly_seasonality=True)
     m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
     m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
-    m.fit(ts)
+    m.fit(ts[lookbackperiod:])
     #forecast = m.make_future_dataframe(periods=0, freq='D')
     forecast = pd.DataFrame(idx3)
     forecast.columns = ['ds']
