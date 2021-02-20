@@ -5,9 +5,18 @@ df = pd.read_csv('btresults.csv')
 df = df.set_index('dt')
 
 #inverse
-df['custom'] = df['custom']*-1
+df['custom'] = df['custom']
 
-actualReturns = ((df['close']-df['close'].shift(+1))/df['close'])*100
+#actualReturns = ((df['close'].shift(-1)-df['close'])/df['close'])*100
+
+
+mergeCompare = pd.merge(df['close'].shift(+1),df['close'], how='inner', left_index=True, right_index=True)
+
+actualReturns = ((mergeCompare['close_y']-mergeCompare['close_x'])/mergeCompare['close_x'])
+
+
+#actualReturns = ((mergeCompare['close_x']-mergeCompare['close_y'])/mergeCompare['close_y'])
+
 
 orderbook = pd.DataFrame()
 
