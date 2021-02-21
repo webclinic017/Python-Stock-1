@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[317]:
+# In[ ]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -18,13 +18,9 @@ df = df.set_index('dt')
 #inverse
 df['custom'] = df['custom']*1
 
-#actualReturns = ((df['close'].shift(-1)-df['close'])/df['close'])*100
-
 mergeCompare = pd.merge(df['close'].shift(+1),df['close'], how='inner', left_index=True, right_index=True)
 
 actualReturns = ((mergeCompare['close_y']-mergeCompare['close_x'])/mergeCompare['close_x'])
-
-#actualReturns = ((mergeCompare['close_x']-mergeCompare['close_y'])/mergeCompare['close_y'])
 
 orderbook = pd.DataFrame()
 
@@ -44,7 +40,9 @@ for i in df.index:
     rsi = df.loc[i]['RSI']
     rsiDelta = (df['RSI']-df['RSI'].shift(+1))[i]
     
-    if (estRet > upper and rsi > 20 and rsiDelta > 0):
+    #if (estRet > upper):
+    #if (estRet > upper and rsi > 20 and rsiDelta > 0)
+    if (estRet > upper and rsi > 20 and rsiDelta > 0 and (df.loc[i]['close']*df.loc[i]['volume'] < df.loc[i]['bbands_upper'])):
         temp['order'] = ['buy']
         
         ProportionOfFunds = funds * BuyFundsPercent
@@ -55,7 +53,9 @@ for i in df.index:
         held = held + Qty
                 
     #what about over 80 RSI?  Guess it's a hold until it drops?
-    elif (estRet < lower and rsi < 80 and rsiDelta < 0):        
+    #elif (estRet < lower):
+    #elif (estRet < lower and rsi < 80 and rsiDelta < 0)
+    elif (estRet < lower and rsi < 80 and rsiDelta < 0 and (df.loc[i]['close']*df.loc[i]['volume'] > df.loc[i]['bbands_lower'])):
         temp['order'] = ['sell']
 
         Qty = held*percentHeldOnSell
@@ -125,4 +125,10 @@ cumulative_og_ret_data = (og_ret_value + 1).cumprod()
 
 plt.plot(cumulative_ret_value)
 plt.plot(cumulative_og_ret_data)
+
+plt.show()
+
+plt.plot(df.dropna()['bbands_upper'])
+plt.plot((df.dropna()['close']*df.dropna()['volume']))
+plt.plot(df.dropna()['bbands_lower'])
 
