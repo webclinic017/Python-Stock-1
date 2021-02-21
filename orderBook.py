@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[317]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -29,7 +29,7 @@ actualReturns = ((mergeCompare['close_y']-mergeCompare['close_x'])/mergeCompare[
 orderbook = pd.DataFrame()
 
 funds = 1000
-BuyFundsPercent = .25
+BuyFundsPercent = .5
 percentHeldOnSell = 1
 
 held = 0
@@ -41,8 +41,10 @@ for i in df.index:
     temp = pd.DataFrame()
 
     estRet = df.loc[i]['custom']
+    rsi = df.loc[i]['RSI']
+    rsiDelta = (df['RSI']-df['RSI'].shift(+1))[i]
     
-    if estRet > upper:
+    if (estRet > upper and rsi > 20 and rsiDelta > 0):
         temp['order'] = ['buy']
         
         ProportionOfFunds = funds * BuyFundsPercent
@@ -52,7 +54,8 @@ for i in df.index:
         funds = funds - value
         held = held + Qty
                 
-    elif estRet < lower:        
+    #what about over 80 RSI?  Guess it's a hold until it drops?
+    elif (estRet < lower and rsi < 80 and rsiDelta < 0):        
         temp['order'] = ['sell']
 
         Qty = held*percentHeldOnSell
@@ -60,10 +63,10 @@ for i in df.index:
         
         funds = funds + value
         held = held - Qty
-        
             
     #if ((estRet < upper) & (etsRet > lower))
-    if ((estRet > lower) and (estRet < upper)):
+    #if ((estRet > lower) and (estRet < upper)):
+    else:
         temp['order'] = ['hold']
         
         Qty = 0
