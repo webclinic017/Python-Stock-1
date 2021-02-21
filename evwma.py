@@ -7,7 +7,7 @@
 get_ipython().system('pip install pandas_ta dataclasses')
 
 
-# In[ ]:
+# In[46]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -42,7 +42,7 @@ def atr(df, n=50):
     return atr
 
 #max # of records is 500
-outter_df = get_crypto_data("BTC/USDT", "2019-01-01", "2020-05-31")
+outter_df = get_crypto_data("BTC/USDT", "2019-01-01", "2021-02-21")
 
 #EVWMA
 Short_EVWMA = pd.DataFrame(TA.EVWMA(outter_df,12))
@@ -61,12 +61,6 @@ Signal_EVWMA = pd.DataFrame(ta.ema(MACD_EVWMA["MACD-line"], length=9))
 Signal_EVWMA.columns = ['Signal_EMA_9_MACD']
 Signal_EVWMA
 outter_df['custom'] = Signal_EVWMA['Signal_EMA_9_MACD']
-
-
-df.to_csv('btresults.csv', index =True)
-
-
-# In[ ]:
 
 
 outter_df.to_csv('btresults.csv', index =True)
