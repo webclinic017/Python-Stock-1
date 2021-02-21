@@ -1,4 +1,4 @@
-from fastquant import get_crypto_data, backtest
+from fastquant import get_crypto_data, get_stock_data, backtest
 from fbprophet import Prophet
 from matplotlib import pyplot as plt
 from fbprophet.diagnostics import cross_validation
@@ -6,11 +6,13 @@ from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
 
-outter_df = get_crypto_data("BTC/USDT", "2019-01-01", "2020-05-31")
+#max # of records is 500
+#outter_df = get_crypto_data("BTC/USDT", "2019-01-01", "2020-05-31")
+outter_df = get_stock_data("JFC", "2018-01-01", "2019-05-31")
 
-#1 year and 1 quarter
-oneyroneqtr=456
-length = len(outter_df[0:oneyroneqttr])
+#oneyroneqtr=456
+oneyroneqtr=315
+length = len(outter_df[0:oneyroneqtr])
 
 custompre = pd.DataFrame()
 
@@ -19,7 +21,7 @@ def MAPE(Y_actual,Y_Predicted):
     return mape_
 
 for x in range(0,len(outter_df)):
-    frames = outter_df.index[x:(x+oneyroneqttr)]
+    frames = outter_df.index[x:(x+oneyroneqtr)]
     length = len(frames)
     if length == oneyroneqtr:
         #print(outter_df.loc[frames])
