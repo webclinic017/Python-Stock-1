@@ -4,6 +4,11 @@
 # In[ ]:
 
 
+#inspiration
+#https://simply-python.com/2019/01/16/retrieving-stock-statistics-from-yahoo-finance-using-python/
+#https://towardsdatascience.com/backtest-your-trading-strategy-with-only-3-lines-of-python-3859b4a4ab44?source=friends_link&sk=ec647b6bb43fe322013248fd1d473015
+#https://simply-python.com/2019/01/16/retrieving-stock-statistics-from-yahoo-finance-using-python/
+
 get_ipython().system('pip install --upgrade pip')
 #!pip install 
 
@@ -331,10 +336,10 @@ print(stocklist)
 # In[ ]:
 
 
-stock
 
 
-# In[ ]:
+
+# In[61]:
 
 
 for i in stocklist:
