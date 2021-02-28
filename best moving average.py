@@ -153,10 +153,6 @@ for i in dateindex2:
         estRet = set.loc[idate]['ExpectedReturn']
 
         temp['orderside'] = ['buy']        
-
-        ProportionOfFunds = funds * BuyFundsPercent
-        #Qty = ProportionOfFunds / set.loc[idate]['Close']
-        paid = set.loc[idate]['Close']*Qty
         
         if len(data[start_date:idate])-1+n_forward>=len(data[start_date:]):
             dateToBesold = np.nan    
@@ -309,11 +305,7 @@ for i in dateindex2:
         print()
             
         runningLog = runningLog.append(rtemp)
-        
-
-
-            
-        
+                
 buyLog
 plt.plot(runningLog.set_index('date')['portValue'])
 #plt.plot(runningLog.set_index('date')['funds'])
