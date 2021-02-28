@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[71]:
+
+
 import yfinance
 import pandas as pd
 import numpy as np
@@ -9,14 +15,19 @@ from datetime import date
 
 from scipy.stats import ttest_ind
 
+
+# In[122]:
+
+
 n_forward = 7
 #name = 'BTC-USD'
-#name = 'GLD'
-name = 'SPY'
-name = 'GOOG'
+name = 'GLD'
+#name = 'SPY'
+#name = 'GOOG'
 
 w=117
 end_date = datetime.date.today()
+#end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 
 #- timedelta(weeks=w*2)
@@ -27,9 +38,27 @@ data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=T
 data['Forward Close'] = data['Close'].shift(-n_forward)
 data['Forward Return'] = (data['Forward Close'] - data['Close'])/data['Close']
 
+benchName = "^GSPC"
+bench = yfinance.Ticker(benchName)
+benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
+
+
+# In[ ]:
+
+
+
+
+
+# In[73]:
+
+
 dateindex = data.loc[start_date:end_date].index
 
 dateindex
+
+
+# In[74]:
+
 
 limit = 100
 n_forward = 7
@@ -110,11 +139,26 @@ for i in range(0,width1):
                     plt.show()
         
         
+    
+
+
+# In[ ]:
+
+
+
+
+
+# In[75]:
+
+
 plt.hist(sdevs, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
-    
+
+
+# In[76]:
+
 
 start = 1000
 
@@ -127,7 +171,20 @@ for i in range(0,len(trades)):
     set = pd.concat([set,value])
     #funds = 
 
+
+# In[77]:
+
+
 plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histogram
+
+
+# In[78]:
+
+
+set
+
+
+# In[79]:
 
 
 
@@ -213,12 +270,29 @@ for i in dateindex2:
 
         orderbook = orderbook.append(temp,ignore_index=True)
 
+        
+        
+
+
+# In[ ]:
+
+
+
+
+
+# In[80]:
+
+
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
+# In[140]:
+
+
+
 funds = 1000
-BuyFundsPercent = .25
+BuyFundsPercent = 1
 percentHeldOnSell = 1
 
 buyLog = pd.DataFrame()
@@ -305,13 +379,51 @@ for i in dateindex2:
         print()
             
         runningLog = runningLog.append(rtemp)
-                
-buyLog
-plt.plot(runningLog.set_index('date')['portValue'])
-#plt.plot(runningLog.set_index('date')['funds'])
+        
+
+
+# In[ ]:
+
+
+
+
+
+# In[141]:
+
+
+ret_data =  runningLog.set_index('date')['portValue'].pct_change()
+cumulative_ret_data = (ret_data + 1).cumprod()
+
+ret_data2 = data[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
+cum_ret_data2 = (ret_data2 + 1).cumprod()
+
+sp500_data = benchData[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
+sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
+
+plt.plot(cumulative_ret_data,label=name + " strategy @ " + str(BuyFundsPercent) )
+plt.plot(cum_ret_data2,label=name + " hold")
+plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
+plt.legend(loc="upper left",fontsize=8)
+
 plt.xticks(rotation=30) 
-#subset
-#plt.plot(runningLog.set_index('date'))
+
+plt.show()
+
+
+# In[127]:
+
+
+sp500_data
+
+
+# In[ ]:
+
+
+
+
+
+# In[83]:
+
 
 #display(orderbook.dropna())
 #plt.plot(orderbook.set_index('date').dropna()['portValue'])
@@ -319,5 +431,16 @@ plt.xticks(rotation=30)
 #plt.show()
 #len(orderbook.dropna())
 
+
+# In[84]:
+
+
 #plt.hist(orderbook['profit'], bins='auto')  # arguments are passed to np.histogram
 #orderbook['profit'].dropna().sum()
+
+
+# In[ ]:
+
+
+
+
