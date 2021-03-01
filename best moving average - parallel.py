@@ -85,6 +85,7 @@ benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adju
 # In[3]:
 
 
+
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
 
@@ -151,50 +152,79 @@ stocks = list(df["Symbol"].sample(n=size))
 def dl_one_week(stock):
     return yf.download(stock, start=one_week_start, end=one_week_end, auto_adjust=True).iloc[:, :6].dropna(axis=0, how='any')
 
-futures1 = [pool1.submit(dl_one_week, args) for args in stocks]
-wait(futures1, timeout=None, return_when=ALL_COMPLETED)
-
-stocks_data_one_week = pd.DataFrame()
-
-for x in range(0,len(stocks)):
-    prices = pd.DataFrame(futures1[x].result())
-    prices['Symbol'] = stocks[x]
-    prices = prices.loc[~prices.index.duplicated(keep='last')]        
-    prices = prices.reset_index()
-                
-    stocks_data_one_week = pd.concat([stocks_data_one_week,prices])
-    
-stocks_data_one_week
-
-#stocks that existed 9 quarters ago
-vetted_symbols = list(stocks_data_one_week.Symbol.unique())
-
-pool2 = concurrent.futures.ProcessPoolExecutor(cores)
-
 def dl(stock):
-    return yf.download(stock, start=start_date, end=end_date).iloc[:, :6].dropna(axis=0, how='any')
+    return yf.download(stock, start=start_date, end=end_date, auto_adjust=True).iloc[:, :6].dropna(axis=0, how='any')
 
-futures2 = [pool2.submit(dl, args) for args in vetted_symbols]
-wait(futures2, timeout=None, return_when=ALL_COMPLETED)
+def processStocks():
 
-stocks_data = pd.DataFrame()
+    futures1 = [pool1.submit(dl_one_week, args) for args in stocks]
+    wait(futures1, timeout=None, return_when=ALL_COMPLETED)
 
-for x in range(0,len(vetted_symbols)):
-    prices = pd.DataFrame(futures2[x].result())
-    prices['Symbol'] = vetted_symbols[x]
-    prices = prices.loc[~prices.index.duplicated(keep='last')]        
-    prices = prices.reset_index()
+    stocks_data_one_week = pd.DataFrame()
+
+    for x in range(0,len(stocks)):
+        prices = pd.DataFrame(futures1[x].result())
+        prices['Symbol'] = stocks[x]
+        prices = prices.loc[~prices.index.duplicated(keep='last')]        
+        prices = prices.reset_index()
+
+        stocks_data_one_week = pd.concat([stocks_data_one_week,prices])
+
+    #stocks_data_one_week
+
+    #stocks that existed 9 quarters ago
+    vetted_symbols = list(stocks_data_one_week.Symbol.unique())
+
+    pool2 = concurrent.futures.ProcessPoolExecutor(cores)
+
+    futures2 = [pool2.submit(dl, args) for args in vetted_symbols]
+    wait(futures2, timeout=None, return_when=ALL_COMPLETED)    
+
+    stocks_data = pd.DataFrame()
+    
+    for x in range(0,len(vetted_symbols)):
+        prices = pd.DataFrame(futures2[x].result())
+        prices['Symbol'] = vetted_symbols[x]
+        prices = prices.loc[~prices.index.duplicated(keep='last')]        
+        prices = prices.reset_index()
+
+        idx1 = prices.index  
+
+        merged = idx1.union(idx2)
+        s = prices.reindex(merged)
+        df = s.interpolate().dropna(axis=0, how='any')
+
+        if len(df) == len(prices.index):
+            stocks_data = pd.concat([stocks_data,df])
             
-    idx1 = prices.index  
-        
-    merged = idx1.union(idx2)
-    s = prices.reindex(merged)
-    df = s.interpolate().dropna(axis=0, how='any')
-        
-    if len(df) == len(prices.index):
-        stocks_data = pd.concat([stocks_data,df])
+    stocks_data.to_csv('stocks_data.csv', index = False)
 
-stocks_data.to_csv(start_date.strftime('%Y-%m-%d')+'-'+end_date.strftime('%Y-%m-%d')+'-'+str(len(vetted_symbols))+'stocks_data.csv', index = False)
+if path.exists('stocks_data.csv'):
+    print("data exists")
+    
+    filePath = 'stocks_data.csv'
+    fileStatsObj = os.stat ( filePath )
+    modificationTime = time.ctime ( fileStatsObj [ stat.ST_MTIME ] )
+
+    print("Last Modified Time : ", modificationTime )
+
+    a = datetime.datetime.strptime(modificationTime, "%a %b %d %H:%M:%S %Y")
+
+    if a.date() != datetime.date.today():
+        print("not same dates downloading stocks")
+        
+        processStocks()
+        
+    else:
+        print("equal dates, not redownloading")
+    
+else:
+    print("downloading stocks.txt")
+    processStocks()
+    
+stocks_data = pd.read_csv('stocks_data.csv', sep=',')[0:-1]
+vetted_symbols = stocks_data.Symbol.unique()
+
 
 
 # In[4]:
