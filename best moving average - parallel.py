@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[3]:
 
 
 import yfinance as yf
@@ -49,7 +49,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[2]:
+# In[4]:
 
 
 n_forward = 7
@@ -58,10 +58,10 @@ n_forward = 7
 #name = 'SPY'
 #name = 'GOOG'
 
-strategy = "EMA"
-#strategy = "SMA"
-indicator = 'Close'
-#indicator = 'VWP'
+#strategy = "EMA"
+strategy = "SMA"
+#indicator = 'Close'
+indicator = 'VWP'
 
 w=117
 end_date = datetime.date.today()
@@ -82,8 +82,7 @@ bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[3]:
-
+# In[5]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -146,7 +145,7 @@ pat = '|'.join(['({})'.format(re.escape(c)) for c in BAD_CHARS])
 df = df[~df['Symbol'].str.contains(pat)]
 
 #choose size
-size=50
+size=100
 stocks = list(df["Symbol"].sample(n=size))
 
 def dl_one_week(stock):
@@ -226,8 +225,7 @@ stocks_data = pd.read_csv('stocks_data.csv', sep=',')[0:-1]
 vetted_symbols = stocks_data.Symbol.unique()
 
 
-
-# In[4]:
+# In[6]:
 
 
 returnsdf = pd.DataFrame()
@@ -236,10 +234,10 @@ returnsl = []
 #cumulative returns of 1st half
 for i in vetted_symbols:
     subset = stocks_data[stocks_data["Symbol"]==i]
-    subset = subset.set_index('Date')[start_date:end_date1]
+    subset = subset.set_index('Date')[start_date.strftime('%Y-%m-%d'):end_date1.strftime('%Y-%m-%d')]
     
     #print(subset)
-    price_data = subset["Adj Close"]
+    price_data = subset["Close"]
     #print(price_data)
     
     ret_data = price_data.pct_change()[1:]
@@ -263,26 +261,33 @@ XPercent = .1
 cutoff = round(len(returnsdf)*XPercent,0)
 
 topXPercent = returnsdf['stock'][0:int(cutoff)]
+topXPercent
 
 
-# In[5]:
+# In[7]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
 returnsdf[0:int(cutoff)]
 
 
-# In[6]:
+# In[8]:
+
+
+(end_date1+timedelta(days=1)).strftime('%Y-%m-%d')
+
+
+# In[9]:
 
 
 #cumulative returns over test period
 
 for i in topXPercent:
     subset = stocks_data[stocks_data["Symbol"]==i]
-    subset = subset.set_index('Date')[end_date1+timedelta(days=1):end_date]
+    subset = subset.set_index('Date')[(end_date1+timedelta(days=1)).strftime('%Y-%m-%d'):end_date.strftime('%Y-%m-%d')]
     
     #print(subset)
-    price_data = subset["Adj Close"]
+    price_data = subset["Close"]
     #print(price_data)
     
     ret_data = price_data.pct_change()[1:]
@@ -298,13 +303,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[10]:
-
-
-
-
-
-# In[11]:
+# In[21]:
 
 
 limit = 100
@@ -313,7 +312,7 @@ n_forward = 7
 train_size = 0.5
 
 #minExpectedReturn = 0.0005
-minExpectedReturn = 0
+minExpectedReturn = 0.01
 
 width1 = len(benchData.loc[start_date:end_date1].index)
 
@@ -323,9 +322,22 @@ width1 = len(benchData.loc[start_date:end_date1].index)
 width2 = len(benchData.loc[end_date1+timedelta(days=1):end_date].index)
 
 dateindex2 = benchData.loc[end_date1+timedelta(days=1):end_date].index
+    
+sp500_data = benchData[end_date1+timedelta(days=1):end_date]['Close'].pct_change()
+sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
+plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
+
+
+# In[26]:
+
+
+
+
+
+# In[30]:
+
 
 #for symbol in topXPercent:
-
 def processSets(symbol):
 
     subset = stocks_data[stocks_data["Symbol"]==symbol]
@@ -340,7 +352,7 @@ def processSets(symbol):
     sdevs = []
 
     for i in range(0,width1):
-        temp = subset.loc[dateindex[i]:dateindex[i+width2]]
+        temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
         #data.loc[dateindex[i]:dateindex[i+width2]]
 
         result = []
@@ -384,15 +396,16 @@ def processSets(symbol):
         elif strategy == "SMA":
             temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
 
+        #print("before ifs")
         if result[0]['p-value'] > .1:
             #print(result[0]['p-value'])
             if result[0]['training_forward_return'] > minExpectedReturn:
                 if result[0]['test_forward_return'] > minExpectedReturn:
 
-                    if temp.ix[-1][indicator]>temp.ix[-1][strategy]:
+                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
 
                         #add to list of trades
-                        trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+                        trades.append(temp.index[-1])
                         expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
                         sdevs.append(np.std(temp['Forward Return']))
 
@@ -414,7 +427,8 @@ def processSets(symbol):
 
                         #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
                         #plt.show()        
-                        
+    
+    #print("starting set")
     set = pd.DataFrame()
     for i in range(0,len(trades)):
 
@@ -426,6 +440,7 @@ def processSets(symbol):
     #display(set)
 
     return set
+    #print(set)
 
 pool3 = concurrent.futures.ProcessPoolExecutor(cores)
 
@@ -434,21 +449,24 @@ futures3 = [pool3.submit(processSets, args) for args in topXPercent]
 wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
-# In[12]:
+# In[50]:
 
 
 
 
 
-# In[14]:
+# In[51]:
 
 
-sp500_data = benchData[end_date1+timedelta(days=1):end_date]['Close'].pct_change()
-sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
-plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
-for i in futures3:
-    set = pd.DataFrame(i.result())
+BuyFundsPercent = .75
+percentHeldOnSell = 1
+
+strategies = []
+holds = []
+
+for f in futures3:
+    set = pd.DataFrame(f.result())
     if (len(set) != 0):
         #display(set)
         #plt.hist(set['sdev'], bins='auto')  # arguments are passed to np.histogram
@@ -481,13 +499,13 @@ for i in futures3:
 
                 temp['orderside'] = ['buy']        
 
-                if len(data[start_date:idate])-1+n_forward>=len(data[start_date:]):
+                if len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward>=len(data[start_date.strftime('%Y-%m-%d'):]):
                     dateToBesold = np.nan    
                     temp['valueAtSale'] = np.nan
                 else:
-                    dateToBeSold = data.ix[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
+                    dateToBeSold = data.ix[len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward].name
 
-                    temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
+                    temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward]).transpose()['Close'].values[0].copy()
 
                 temp['date'] = [idate]
                 temp['valueAtPurchase'] = set.loc[idate]['Close']
@@ -515,14 +533,14 @@ for i in futures3:
             if (idate in sellDates.set_index('date').index):    
                 temp = pd.DataFrame()
 
-                dateBought = data.ix[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')        
+                dateBought = data.ix[len(data[start_date.strftime('%Y-%m-%d'):idate])-1-n_forward].name
                 dateToBeSold = idate
                 temp['dateBought'] = [dateBought]
                 temp['dateToBeSold'] = dateToBeSold
-                temp['valueAtPurchase'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
+                temp['valueAtPurchase'] = pd.DataFrame(data.ix[len(data[start_date.strftime('%Y-%m-%d'):idate])-1-n_forward]).transpose()['Close'].values[0].copy()
                 estRet = set.loc[dateBought]['ExpectedReturn']
                 temp['estRet'] = estRet
-                temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
+                temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date.strftime('%Y-%m-%d'):idate])-1]).transpose()['Close'].values[0]
 
                 #temp['dateToBeSold'] = idate
                 #temp['estRet'] = data.loc[idate]['Forward Return']
@@ -542,8 +560,6 @@ for i in futures3:
         #display(orderbook.sort_values(by=['date','orderside'], ascending=True))
 
         funds = 1000
-        BuyFundsPercent = .75
-        percentHeldOnSell = 1
 
         buyLog = pd.DataFrame()
         sellLog = pd.DataFrame()
@@ -616,8 +632,8 @@ for i in futures3:
                     remainder = (sum(buyLog['qty']))
 
                 rtemp['held'] = remainder
-                rtemp['value'] = remainder * data.loc[i]['Close']
-                rtemp['portValue'] = funds + remainder * data.loc[i]['Close']
+                rtemp['value'] = remainder * data.loc[t]['Close']
+                rtemp['portValue'] = funds + remainder * data.loc[t]['Close']
 
                 #print("in " + str(gain))
                 #print("out " + str(paid))
@@ -634,23 +650,37 @@ for i in futures3:
         cumulative_ret_data = (ret_data + 1).cumprod()
 
         #ret_data2 = data[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
-        ret_data2 = data[end_date1+timedelta(days=1):end_date]['Close'].pct_change()
+        ret_data2 = data[(end_date1+timedelta(days=1)).strftime('%Y-%m-%d'):end_date.strftime('%Y-%m-%d')]['Close'].pct_change().copy()
         cum_ret_data2 = (ret_data2 + 1).cumprod()
 
         #sp500_data = benchData[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
         plt.plot(cumulative_ret_data,label=" strategy @ " + str(BuyFundsPercent) )
-        plt.plot(cum_ret_data2,label=" hold")        
-        
+
+        #This is already plotted earlier
+        #plt.plot(cum_ret_data2,label=" hold")        
+
         #runningLog
 
         #plt.show()
-        print("strategy: " + str(cumulative_ret_data.iloc[-1]) + "vs hold: " + str(cum_ret_data2.iloc[-1]))
-        
+        strategies.append(cumulative_ret_data.iloc[-1])
+        holds.append(cum_ret_data2.iloc[-1])
+        print("strategy: " + str(cumulative_ret_data.iloc[-1]) + " vs hold: " + str(cum_ret_data2.iloc[-1]))
+
 plt.legend(loc="upper left",fontsize=8)
 
 plt.xticks(rotation=30) 
 
 
+# In[52]:
+
+
+
+print("SP500: " + str(sp500_cumulative_ret_data.iloc[-1]))
+
+print("Strategy: " + str(pd.DataFrame(strategies).mean().values[0]))
+print("Hold: " + str(pd.DataFrame(holds).mean().values[0]))
+
+
 # In[ ]:
 
 
@@ -669,7 +699,7 @@ plt.xticks(rotation=30)
 
 
 
-# In[15]:
+# In[ ]:
 
 
 #plt.plot((set['ExpectedReturn']+1))
@@ -677,7 +707,7 @@ plt.xticks(rotation=30)
 #len(set['ExpectedReturn']+1)
 
 
-# In[16]:
+# In[ ]:
 
 
 #plt.hist(runningLog['portValue'].dropna().pct_change(), bins='auto')  # arguments are passed to np.histogram
