@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[103]:
+# In[11]:
 
 
 import yfinance as yf
@@ -51,7 +51,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[104]:
+# In[12]:
 
 
 n_forward = 7
@@ -66,25 +66,42 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-#end_date = datetime.date.today()
-end_date = datetime.date.today() - timedelta(weeks=w)
+end_date = datetime.date.today()
+#end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 
 #- timedelta(weeks=w*2)
 start_date = end_date1 - timedelta(weeks=w)
-
-#ticker = yf.Ticker(name)
-#data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
-#data['Forward Close'] = data['Close'].shift(-n_forward)
-#data['Forward Return'] = (data['Forward Close'] - data['Close'])/data['Close']
-#data['VWP'] = data['Close']*data['Volume']
 
 benchName = "^GSPC"
 bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[105]:
+# In[13]:
+
+
+def unique(list1):
+ 
+    # intilize a null list
+    unique_list = []
+     
+    # traverse for all elements
+    for x in list1:
+        # check if exists in unique_list or not
+        if x not in unique_list:
+            unique_list.append(x)
+
+    return(unique_list)
+
+
+# In[6]:
+
+
+
+
+
+# In[17]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -132,6 +149,7 @@ if path.exists("nasdaqtraded.txt"):
         print("not same dates downloading")
         urllib.request.urlretrieve(url, 'nasdaqtraded.txt')
         urllib.request.urlretrieve(url, 'mfundslist.txt')
+        urllib.request.urlretrieve(url, 'bonds.txt')
     else:
       print("equal dates, not redownloading")
     
@@ -139,18 +157,26 @@ else:
     print("downloading nasdaqtraded.txt")
     urllib.request.urlretrieve(url, 'nasdaqtraded.txt')
     urllib.request.urlretrieve(url, 'mfundslist.txt')
+    urllib.request.urlretrieve(url, 'bonds.txt')
     
-df = pd.read_csv('nasdaqtraded.txt', sep='|')[0:-1]
+df1 = pd.read_csv('nasdaqtraded.txt', sep='|')[0:-1]
+df2 = pd.read_csv('mfundslist.txt', sep='|')[0:-1]
+df3 = pd.read_csv('bonds.txt', sep='|')[0:-1]
 
 #process symbols for bad characters
 BAD_CHARS = ['$','.']
 pat = '|'.join(['({})'.format(re.escape(c)) for c in BAD_CHARS])
 
-df = df[~df['Symbol'].str.contains(pat)]
+df1 = df1[~df1['Symbol'].str.contains(pat)]
+df2 = df2[~df2['Symbol'].str.contains(pat)]
+df3 = df3[~df3['Symbol'].str.contains(pat)]
 
 #choose size
-size=200
-stocks = list(df["Symbol"].sample(n=size))
+size=300
+stocks = list(df1["Symbol"].sample(n=int(size/3)))
+mfunds = list(df2["Symbol"].sample(n=int(size/3)))
+bonds = list(df3["Symbol"].sample(n=int(size/3)))
+symbols = unique(stocks + mfunds + bonds)
 
 def dl_one_week(stock):
     return yf.download(stock, start=one_week_start, end=one_week_end, auto_adjust=True).iloc[:, :6].dropna(axis=0, how='any')
@@ -158,32 +184,32 @@ def dl_one_week(stock):
 def dl(stock):
     return yf.download(stock, start=start_date, end=end_date, auto_adjust=True).iloc[:, :6].dropna(axis=0, how='any')
 
-def processStocks():
+def processStocks(symbols):
 
-    futures1 = [pool1.submit(dl_one_week, args) for args in stocks]
+    futures1 = [pool1.submit(dl_one_week, args) for args in symbols]
     wait(futures1, timeout=None, return_when=ALL_COMPLETED)
 
-    stocks_data_one_week = pd.DataFrame()
+    symbols_data_one_week = pd.DataFrame()
 
-    for x in range(0,len(stocks)):
+    for x in range(0,len(symbols)):
         prices = pd.DataFrame(futures1[x].result())
-        prices['Symbol'] = stocks[x]
+        prices['Symbol'] = symbols[x]
         prices = prices.loc[~prices.index.duplicated(keep='last')]        
         prices = prices.reset_index()
 
-        stocks_data_one_week = pd.concat([stocks_data_one_week,prices])
+        symbols_data_one_week = pd.concat([symbols_data_one_week,prices])
 
-    #stocks_data_one_week
+    #symbols_data_one_week
 
     #stocks that existed 9 quarters ago
-    vetted_symbols = list(stocks_data_one_week.Symbol.unique())
+    vetted_symbols = list(symbols_data_one_week.Symbol.unique())
 
     pool2 = concurrent.futures.ProcessPoolExecutor(cores)
 
     futures2 = [pool2.submit(dl, args) for args in vetted_symbols]
     wait(futures2, timeout=None, return_when=ALL_COMPLETED)    
 
-    stocks_data = pd.DataFrame()
+    symbols_data = pd.DataFrame()
     
     for x in range(0,len(vetted_symbols)):
         prices = pd.DataFrame(futures2[x].result())
@@ -198,14 +224,14 @@ def processStocks():
         df = s.interpolate().dropna(axis=0, how='any')
 
         if len(df) == len(prices.index):
-            stocks_data = pd.concat([stocks_data,df])
+            symbols_data = pd.concat([symbols_data,df])
             
-    stocks_data.to_csv('stocks_data.csv', index = False)
+    symbols_data.to_csv('symbols_data.csv', index = False)
 
-if path.exists('stocks_data.csv'):
+if path.exists('symbols_data.csv'):
     print("data exists")
     
-    filePath = 'stocks_data.csv'
+    filePath = 'symbols_data.csv'
     fileStatsObj = os.stat ( filePath )
     modificationTime = time.ctime ( fileStatsObj [ stat.ST_MTIME ] )
 
@@ -216,20 +242,20 @@ if path.exists('stocks_data.csv'):
     if a.date() != datetime.date.today():
         print("not same dates downloading stocks")
         
-        processStocks()
+        processStocks(symbols)
         
     else:
         print("equal dates, not redownloading")
     
 else:
-    print("downloading stocks.txt")
-    processStocks()
+    print("downloading symbols.txt")
+    processStocks(symbols)
     
-stocks_data = pd.read_csv('stocks_data.csv', sep=',')[0:-1]
-vetted_symbols = stocks_data.Symbol.unique()
+symbols_data = pd.read_csv('symbols_data.csv', sep=',')[0:-1]
+vetted_symbols = symbols_data.Symbol.unique()
 
 
-# In[106]:
+# In[18]:
 
 
 returnsdf = pd.DataFrame()
@@ -237,7 +263,7 @@ returnsl = []
 
 #cumulative returns of 1st half
 for i in vetted_symbols:
-    subset = stocks_data[stocks_data["Symbol"]==i]
+    subset = symbols_data[symbols_data["Symbol"]==i]
     subset = subset.set_index('Date')[start_date.strftime('%Y-%m-%d'):end_date1.strftime('%Y-%m-%d')]
     
     #print(subset)
@@ -268,7 +294,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[107]:
+# In[19]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -281,13 +307,13 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[108]:
+# In[20]:
 
 
 #cumulative returns over test period
 
 for i in topXPercent:
-    subset = stocks_data[stocks_data["Symbol"]==i]
+    subset = symbols_data[symbols_data["Symbol"]==i]
     subset = subset.set_index('Date')[(end_date1+timedelta(days=1)).strftime('%Y-%m-%d'):end_date.strftime('%Y-%m-%d')]
     
     #print(subset)
@@ -307,7 +333,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[109]:
+# In[21]:
 
 
 limit = 100
@@ -316,7 +342,7 @@ n_forward = 7
 train_size = 0.5
 
 #minExpectedReturn = 0.0005
-minExpectedReturn = 0
+minExpectedReturn = 0.0
 
 width1 = len(benchData.loc[start_date:end_date1].index)
 
@@ -344,7 +370,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 #for symbol in topXPercent:
 def processSets(symbol):
 
-    subset = stocks_data[stocks_data["Symbol"]==symbol]
+    subset = symbols_data[symbols_data["Symbol"]==symbol]
     subset = subset.set_index('Date')
     subset['Forward Close'] = subset['Close'].shift(-n_forward)
     subset['Forward Return'] = (subset['Forward Close'] - subset['Close'])/subset['Close']
@@ -463,7 +489,10 @@ wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 # In[ ]:
 
 
-
+#set[dateindex2.iloc[0]:dateindex2.iloc[-1]]
+#pd.DataFrame(dateindex2).loc[0]
+#:pd.DataFrame(dateindex2).loc[-1]
+set
 
 
 # In[ ]:
@@ -477,7 +506,8 @@ strategies = []
 holds = []
 
 for f in futures3:
-    set = pd.DataFrame(f.result())
+    #throwing a weird date error with one dataframe (had date outside of range)
+    set = pd.DataFrame(f.result())[(end_date1+timedelta(days=1)).strftime('%Y-%m-%d'):end_date.strftime('%Y-%m-%d')]
     if (len(set) != 0):
         #display(set)
         #plt.hist(set['sdev'], bins='auto')  # arguments are passed to np.histogram
@@ -494,7 +524,7 @@ for f in futures3:
 
         sellDates = pd.DataFrame(columns = column_names)
 
-        data = stocks_data[stocks_data["Symbol"]==set['Symbol'].unique()[0]].set_index('Date')
+        data = symbols_data[symbols_data["Symbol"]==set['Symbol'].unique()[0]].set_index('Date')
         #print(set['Symbol'])
 
         for i in dateindex2:
@@ -586,9 +616,9 @@ for f in futures3:
             rtemp = pd.DataFrame()
             _temp = pd.DataFrame()
 
-            t = i.strftime('%Y-%m-%d')
+            idate = i.strftime('%Y-%m-%d')
 
-            subset = orderbook[orderbook['date']==t]
+            subset = orderbook[orderbook['date']==idate]
             gain = 0
             paid = 0
 
@@ -643,8 +673,8 @@ for f in futures3:
                     remainder = (sum(buyLog['qty']))
 
                 rtemp['held'] = remainder
-                rtemp['value'] = remainder * data.loc[t]['Close']
-                rtemp['portValue'] = funds + remainder * data.loc[t]['Close']
+                rtemp['value'] = remainder * data.loc[idate]['Close']
+                rtemp['portValue'] = funds + remainder * data.loc[idate]['Close']
 
                 #print("in " + str(gain))
                 #print("out " + str(paid))
