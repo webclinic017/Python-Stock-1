@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[67]:
+# In[103]:
 
 
 import yfinance as yf
@@ -40,6 +40,8 @@ from stockstats import StockDataFrame
 import tabulate
 import mplfinance as mpf
 import matplotlib.dates as mdates
+import statsmodels.tsa.stattools as ts
+from hurst import compute_Hc
 
 from finta import TA
 from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
@@ -49,7 +51,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[68]:
+# In[104]:
 
 
 n_forward = 7
@@ -82,13 +84,13 @@ bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[69]:
+# In[105]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
 pd.set_option('display.max_rows', None) #replace n with the number of rows you want to see completely
 
-cores = int(len(os.sched_getaffinity(0))/2)
+cores = int(len(os.sched_getaffinity(0)))
 
 pool1 = concurrent.futures.ProcessPoolExecutor(cores)
 
@@ -129,12 +131,14 @@ if path.exists("nasdaqtraded.txt"):
     if a.date() != datetime.date.today():
         print("not same dates downloading")
         urllib.request.urlretrieve(url, 'nasdaqtraded.txt')
+        urllib.request.urlretrieve(url, 'mfundslist.txt')
     else:
       print("equal dates, not redownloading")
     
 else:
     print("downloading nasdaqtraded.txt")
     urllib.request.urlretrieve(url, 'nasdaqtraded.txt')
+    urllib.request.urlretrieve(url, 'mfundslist.txt')
     
 df = pd.read_csv('nasdaqtraded.txt', sep='|')[0:-1]
 
@@ -145,7 +149,7 @@ pat = '|'.join(['({})'.format(re.escape(c)) for c in BAD_CHARS])
 df = df[~df['Symbol'].str.contains(pat)]
 
 #choose size
-size=1000
+size=200
 stocks = list(df["Symbol"].sample(n=size))
 
 def dl_one_week(stock):
@@ -225,7 +229,7 @@ stocks_data = pd.read_csv('stocks_data.csv', sep=',')[0:-1]
 vetted_symbols = stocks_data.Symbol.unique()
 
 
-# In[70]:
+# In[106]:
 
 
 returnsdf = pd.DataFrame()
@@ -264,7 +268,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[71]:
+# In[107]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -277,7 +281,7 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[72]:
+# In[108]:
 
 
 #cumulative returns over test period
@@ -303,7 +307,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[73]:
+# In[109]:
 
 
 limit = 100
@@ -312,7 +316,7 @@ n_forward = 7
 train_size = 0.5
 
 #minExpectedReturn = 0.0005
-minExpectedReturn = 0.015
+minExpectedReturn = 0
 
 width1 = len(benchData.loc[start_date:end_date1].index)
 
@@ -334,7 +338,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
 
-# In[74]:
+# In[ ]:
 
 
 #for symbol in topXPercent:
@@ -351,8 +355,12 @@ def processSets(symbol):
 
     sdevs = []
 
+    #rolling windows
     for i in range(0,width1):
         temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
+        adf_results = ts.adfuller(temp['Close'], 1)
+        H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
+        
         #data.loc[dateindex[i]:dateindex[i+width2]]
 
         result = []
@@ -401,32 +409,35 @@ def processSets(symbol):
             #print(result[0]['p-value'])
             if result[0]['training_forward_return'] > minExpectedReturn:
                 if result[0]['test_forward_return'] > minExpectedReturn:
+                    
+                    #trending
+                    if H > 0.5 or adf_results[1] > 0.05:
 
-                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
+                        if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
 
-                        #add to list of trades
-                        trades.append(temp.index[-1])
-                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                        sdevs.append(np.std(temp['Forward Return']))
+                            #add to list of trades
+                            trades.append(temp.index[-1])
+                            expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                            sdevs.append(np.std(temp['Forward Return']))
 
-                        #print(result[0])
-                        #print(temp[-1:][indicator])
+                            #print(result[0])
+                            #print(temp[-1:][indicator])
 
-                        #print(temp[-1:][strategy])
+                            #print(temp[-1:][strategy])
 
-                        #plt.plot(temp[indicator],label=symbol)
+                            #plt.plot(temp[indicator],label=symbol)
 
-                        #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
+                            #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
 
-                        #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                        #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                            #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                            #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
 
-                        #plt.legend()
+                            #plt.legend()
 
-                        #plt.show()
+                            #plt.show()
 
-                        #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                        #plt.show()        
+                            #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
+                            #plt.show()        
     
     #print("starting set")
     set = pd.DataFrame()
@@ -455,7 +466,7 @@ wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
 
-# In[75]:
+# In[ ]:
 
 
 
@@ -671,7 +682,7 @@ plt.legend(loc="upper left",fontsize=8)
 plt.xticks(rotation=30) 
 
 
-# In[76]:
+# In[ ]:
 
 
 
@@ -699,7 +710,7 @@ print("Hold: " + str(pd.DataFrame(holds).mean().values[0]))
 
 
 
-# In[77]:
+# In[ ]:
 
 
 #plt.plot((set['ExpectedReturn']+1))
@@ -707,7 +718,7 @@ print("Hold: " + str(pd.DataFrame(holds).mean().values[0]))
 #len(set['ExpectedReturn']+1)
 
 
-# In[78]:
+# In[ ]:
 
 
 #plt.hist(runningLog['portValue'].dropna().pct_change(), bins='auto')  # arguments are passed to np.histogram
