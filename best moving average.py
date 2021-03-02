@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[22]:
 
 
 import yfinance
@@ -30,8 +30,8 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-#end_date = datetime.date.today()
-end_date = datetime.date.today() - timedelta(weeks=w)
+end_date = datetime.date.today()
+#end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 
 #- timedelta(weeks=w*2)
@@ -46,6 +46,10 @@ data['VWP'] = data['Close']*data['Volume']
 benchName = "^GSPC"
 bench = yfinance.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
+
+
+# In[ ]:
+
 
 dateindex = data.loc[start_date:end_date].index
 
@@ -116,9 +120,10 @@ for i in range(0,width1):
         #print(result[0]['p-value'])
         if result[0]['training_forward_return'] > minExpectedReturn:
             if result[0]['test_forward_return'] > minExpectedReturn:
-                 if H > 0.5 or adf_results[1] > 0.05:
+                if H > 0.5 or adf_results[1] > 0.05:
+                #if True:
 
-                    if temp.ix[-1][indicator]>temp.ix[-1][strategy]:
+                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
 
                         #add to list of trades
                         trades.append(temp.index[-1].strftime('%Y-%m-%d'))
@@ -148,6 +153,10 @@ plt.hist(sdevs, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
+
+
+# In[ ]:
+
 
 start = 1000
 
@@ -189,9 +198,9 @@ for i in dateindex2:
             dateToBesold = np.nan    
             temp['valueAtSale'] = np.nan
         else:
-            dateToBeSold = data.ix[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
+            dateToBeSold = data.iloc[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
             
-            temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
+            temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
          
         temp['date'] = [idate]
         temp['valueAtPurchase'] = set.loc[idate]['Close']
@@ -219,14 +228,14 @@ for i in dateindex2:
     if (idate in sellDates.set_index('date').index):    
         temp = pd.DataFrame()
 
-        dateBought = data.ix[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')        
+        dateBought = data.iloc[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')        
         dateToBeSold = idate
         temp['dateBought'] = [dateBought]
         temp['dateToBeSold'] = dateToBeSold
-        temp['valueAtPurchase'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
+        temp['valueAtPurchase'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
         estRet = set.loc[dateBought]['ExpectedReturn']
         temp['estRet'] = estRet
-        temp['valueAtSale'] = pd.DataFrame(data.ix[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
+        temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
         
         #temp['dateToBeSold'] = idate
         #temp['estRet'] = data.loc[idate]['Forward Return']
@@ -246,11 +255,7 @@ for i in dateindex2:
         
 
 
-
-
-
-
-# In[5]:
+# In[ ]:
 
 
 
@@ -353,7 +358,13 @@ for i in dateindex2:
 
 
 
-# In[20]:
+# In[27]:
+
+
+
+
+
+# In[ ]:
 
 
 
@@ -375,7 +386,7 @@ plt.xticks(rotation=30)
 
 plt.show()
 
-cumulative_ret_data
+print(cumulative_ret_data[-1])
 
 plt.plot((set['ExpectedReturn']+1))
 plt.xticks(rotation=30) 
