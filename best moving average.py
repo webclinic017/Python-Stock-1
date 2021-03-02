@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[6]:
+
+
+#https://nomodulenamed.com/m/pandas.core.ops.roperator
+get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
+#"pandas==1.0.3"
+
+
+# In[2]:
+
+
+#!/usr/bin/env python
+# coding: utf-8
+
 # In[22]:
 
 
@@ -15,6 +29,8 @@ from datetime import date
 import pandas_ta as ta
 import statsmodels.tsa.stattools as ts
 from hurst import compute_Hc
+from fbprophet import Prophet
+import pandas_market_calendars as mcal
 
 from scipy.stats import ttest_ind
 
@@ -37,6 +53,9 @@ end_date1 = end_date - timedelta(weeks=w)
 #- timedelta(weeks=w*2)
 start_date = end_date1 - timedelta(weeks=w)
 
+nyse = mcal.get_calendar('NYSE')
+official_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
+
 ticker = yfinance.Ticker(name)
 data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 data['Forward Close'] = data['Close'].shift(-n_forward)
@@ -49,6 +68,17 @@ benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adju
 
 
 # In[ ]:
+
+
+# In[64]:
+
+
+if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) or (pred['yhat'][0] > temp.iloc[-1][indicator]):
+    print("true")
+
+
+# In[65]:
+
 
 
 dateindex = data.loc[start_date:end_date].index
@@ -74,6 +104,28 @@ for i in range(0,width1):
     
     adf_results = ts.adfuller(temp['Close'], 1)
     H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
+    
+    #dateToBeSold = ((official_trading_dates.loc[i][0].strftime('%Y-%m-%d')+n_forward).strftime('%Y-%m-%d') 
+    
+    ts1 = pd.DataFrame()
+    ts1["Date"] = temp.index
+    ts1[indicator] = temp.VWP.values
+    ts1.columns = ['ds', 'y']
+
+    #no need to strip last day from model becuase df_inner (which ts is based on) is already -2
+    m = Prophet(daily_seasonality=True,yearly_seasonality=True)
+    m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+    m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
+    m.fit(ts1)
+
+    #forecast only last day in model (can verify result) needs to be based on df.loc (similar to df_inner)
+    #forecast = pd.DataFrame([pd.DataFrame(official_trading_dates.index).loc[pd.DatetimeIndex(official_trading_dates.index).get_loc(temp.index[-1].strftime('%Y-%m-%d'))+n_forward-2][0].strftime('%Y-%m-%d')])
+    forecast = pd.DataFrame([(temp.index[-1] + timedelta(days=n_forward)).strftime('%Y-%m-%d')]) 
+    
+    forecast.columns = ['ds']
+
+    #Predict and plot
+    pred = m.predict(forecast)
                 
     result = []
     
@@ -123,7 +175,7 @@ for i in range(0,width1):
                 if H > 0.5 or adf_results[1] > 0.05:
                 #if True:
 
-                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
+                    if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) or (pred['yhat'][0] > temp.iloc[-1][indicator]):
 
                         #add to list of trades
                         trades.append(temp.index[-1].strftime('%Y-%m-%d'))
@@ -156,6 +208,10 @@ plt.show()
 
 
 # In[ ]:
+
+
+# In[66]:
+
 
 
 start = 1000
@@ -258,6 +314,11 @@ for i in dateindex2:
 # In[ ]:
 
 
+# In[67]:
+
+
+
+
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
@@ -352,19 +413,7 @@ for i in dateindex2:
         
 
 
-# In[18]:
-
-
-
-
-
-# In[27]:
-
-
-
-
-
-# In[ ]:
+# In[68]:
 
 
 
