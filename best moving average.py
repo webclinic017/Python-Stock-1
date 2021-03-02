@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import yfinance
@@ -245,10 +245,19 @@ for i in dateindex2:
 
         
 
+
+
+
+
+
+# In[5]:
+
+
+
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 funds = 1000
-BuyFundsPercent = .25
+BuyFundsPercent = .75
 percentHeldOnSell = 1
 
 buyLog = pd.DataFrame()
@@ -275,7 +284,7 @@ for i in dateindex2:
         
         sales = subset[subset['orderside'] == 'sell']
         
-        print("date " + str(i))
+        #print("date " + str(i))
         
         if len(sales) != 0:                        
             
@@ -284,7 +293,7 @@ for i in dateindex2:
             newvalue = sales['valueAtSale'].values[0]            
             
             Qty = buyLog.set_index('date').loc[sales['dateBought'].values[0]].values[0]
-            print("Qty sold " + str(Qty.round(2)))
+            #print("Qty sold " + str(Qty.round(2)))
             
             gain = newvalue * Qty
             
@@ -300,8 +309,8 @@ for i in dateindex2:
             ProportionOfFunds = funds * BuyFundsPercent
         
             Qty = ProportionOfFunds / purchases['valueAtPurchase'].values[0]
-            print(purchases['valueAtPurchase'].values[0])
-            print("Qty purchased " + str(Qty.round(2)))
+            #print(purchases['valueAtPurchase'].values[0])
+            #print("Qty purchased " + str(Qty.round(2)))
             
             temp['date'] = [i]
             temp['qty'] = [Qty]
@@ -332,10 +341,21 @@ for i in dateindex2:
         #print("held Value: " + str(remainder * data.loc[i]['Close']))
         #print("funds " + str(funds))
         #print("portValue " + str(funds + remainder * data.loc[i]['Close']))
-        print()
+        #print()
             
         runningLog = runningLog.append(rtemp)
         
+
+
+# In[18]:
+
+
+
+
+
+# In[20]:
+
+
 
 ret_data =  runningLog.set_index('date')['portValue'].pct_change()
 cumulative_ret_data = (ret_data + 1).cumprod()
@@ -363,10 +383,8 @@ plt.xticks(rotation=30)
 
 runningLog
 
-
-plt.hist(runningLog['portValue'].dropna().pct_change(), bins='auto')  # arguments are passed to np.histogram
+plt.show()
+print(cumulative_ret_data.iloc[-1])
+plt.hist(runningLog.set_index('date')['portValue'].pct_change().dropna(), bins='auto')  # arguments are passed to np.histogram
 print(runningLog['portValue'].dropna().pct_change().sum())
-
-
-
 
