@@ -72,11 +72,6 @@ benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adju
 
 # In[64]:
 
-
-if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) or (pred['yhat'][0] > temp.iloc[-1][indicator]):
-    print("true")
-
-
 # In[65]:
 
 
