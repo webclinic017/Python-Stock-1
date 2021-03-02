@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[201]:
+# In[ ]:
 
 
 import yfinance
@@ -13,12 +13,10 @@ import datetime
 from datetime import timedelta
 from datetime import date
 import pandas_ta as ta
+import statsmodels.tsa.stattools as ts
+from hurst import compute_Hc
 
 from scipy.stats import ttest_ind
-
-
-# In[202]:
-
 
 n_forward = 7
 name = 'BTC-USD'
@@ -26,8 +24,8 @@ name = 'BTC-USD'
 #name = 'SPY'
 #name = 'GOOG'
 
-strategy = "EMA"
-#strategy = "SMA"
+#strategy = "EMA"
+strategy = "SMA"
 #indicator = 'Close'
 indicator = 'VWP'
 
@@ -49,20 +47,7 @@ benchName = "^GSPC"
 bench = yfinance.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
-
-# In[ ]:
-
-
-
-
-
-# In[203]:
-
-
 dateindex = data.loc[start_date:end_date].index
-
-
-# In[204]:
 
 
 limit = 100
@@ -81,8 +66,11 @@ width1 = len(data.loc[start_date:end_date1].index)
 width2 = len(data.loc[end_date1+timedelta(days=1):end_date].index)
 
 for i in range(0,width1):
-    temp = data.loc[dateindex[i]:dateindex[i+width2]]
+    temp = data.loc[dateindex[i]:dateindex[i+width2]].copy()
     
+    adf_results = ts.adfuller(temp['Close'], 1)
+    H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
+                
     result = []
     
     for ma_length in range(20,limit):        
@@ -128,51 +116,38 @@ for i in range(0,width1):
         #print(result[0]['p-value'])
         if result[0]['training_forward_return'] > minExpectedReturn:
             if result[0]['test_forward_return'] > minExpectedReturn:
-                                                
-                if temp.ix[-1][indicator]>temp.ix[-1][strategy]:
-                    
-                    #add to list of trades
-                    trades.append(temp.index[-1].strftime('%Y-%m-%d'))
-                    expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                    sdevs.append(np.std(temp['Forward Return']))
+                 if H > 0.5 or adf_results[1] > 0.05:
 
-                    print(result[0])
-                    print(temp[-1:][indicator])
-                    
-                    print(temp[-1:][strategy])
-                
-                    plt.plot(temp[indicator],label=name)
-                    
-                    stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
-                    
-                    #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                    plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                    
-                    plt.legend()
+                    if temp.ix[-1][indicator]>temp.ix[-1][strategy]:
 
-                    plt.show()
-                    
-                    plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                    plt.show()        
+                        #add to list of trades
+                        trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                        sdevs.append(np.std(temp['Forward Return']))
 
+                        #print(result[0])
+                        #print(temp[-1:][indicator])
 
-# In[ ]:
+                        #print(temp[-1:][strategy])
 
+                        #plt.plot(temp[indicator],label=name)
 
+                        #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
 
+                        #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                        #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
 
+                        #plt.legend()
 
-# In[205]:
+                        #plt.show()
 
+                        #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
+                        #plt.show()        
 
 plt.hist(sdevs, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
-
-
-# In[206]:
-
 
 start = 1000
 
@@ -185,21 +160,7 @@ for i in range(0,len(trades)):
     set = pd.concat([set,value])
 
 
-# In[207]:
-
-
 plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-
-
-# In[208]:
-
-
-set
-
-
-# In[209]:
-
-
 
 orderbook = pd.DataFrame()
 
@@ -283,25 +244,8 @@ for i in dateindex2:
         orderbook = orderbook.append(temp,ignore_index=True)
 
         
-        
-
-
-# In[ ]:
-
-
-
-
-
-# In[210]:
-
-
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
-
-
-# In[216]:
-
-
 
 funds = 1000
 BuyFundsPercent = .25
@@ -381,27 +325,17 @@ for i in dateindex2:
         rtemp['value'] = remainder * data.loc[i]['Close']
         rtemp['portValue'] = funds + remainder * data.loc[i]['Close']
                 
-        print("in " + str(gain))
-        print("out " + str(paid))
-        print("held: " + str(remainder))
-        print("Close Value: " + str(data.loc[i]['Close']))
-        print("held Value: " + str(remainder * data.loc[i]['Close']))
-        print("funds " + str(funds))
-        print("portValue " + str(funds + remainder * data.loc[i]['Close']))
+        #print("in " + str(gain))
+        #print("out " + str(paid))
+        #print("held: " + str(remainder))
+        #print("Close Value: " + str(data.loc[i]['Close']))
+        #print("held Value: " + str(remainder * data.loc[i]['Close']))
+        #print("funds " + str(funds))
+        #print("portValue " + str(funds + remainder * data.loc[i]['Close']))
         print()
             
         runningLog = runningLog.append(rtemp)
         
-
-
-# In[ ]:
-
-
-
-
-
-# In[217]:
-
 
 ret_data =  runningLog.set_index('date')['portValue'].pct_change()
 cumulative_ret_data = (ret_data + 1).cumprod()
@@ -421,35 +355,17 @@ plt.xticks(rotation=30)
 
 plt.show()
 
-
-# In[218]:
-
-
 cumulative_ret_data
-
-
-# In[235]:
-
 
 plt.plot((set['ExpectedReturn']+1))
 plt.xticks(rotation=30) 
 #len(set['ExpectedReturn']+1)
 
-
-# In[247]:
-
-
 runningLog
-
-
-# In[246]:
 
 
 plt.hist(runningLog['portValue'].dropna().pct_change(), bins='auto')  # arguments are passed to np.histogram
 print(runningLog['portValue'].dropna().pct_change().sum())
-
-
-# In[ ]:
 
 
 
