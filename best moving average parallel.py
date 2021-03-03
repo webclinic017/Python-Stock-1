@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[52]:
 
 
 import yfinance as yf
@@ -51,11 +51,11 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[12]:
+# In[53]:
 
 
 n_forward = 7
-#name = 'BTC-USD'
+
 #name = 'GLD'
 #name = 'SPY'
 #name = 'GOOG'
@@ -78,7 +78,43 @@ bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[13]:
+# In[54]:
+
+
+
+dateindex = benchData.loc[start_date:end_date].index
+dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-start_date).days)]
+
+dateindex2 = benchData.loc[end_date1:end_date].index
+
+dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
+
+nyse = mcal.get_calendar('NYSE')
+nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
+
+idx2 = nyse_trading_dates.index
+
+
+# In[55]:
+
+
+if(len(benchData)==len(dateindex_)):
+    frequency=dateindex_n_forward
+    
+else:
+    frequency=nyse_trading_dates
+    #frequency = pd.DataFrame(frequency).set_index(0).index
+    
+frequency = frequency.index
+
+
+# In[ ]:
+
+
+
+
+
+# In[56]:
 
 
 def unique(list1):
@@ -95,13 +131,13 @@ def unique(list1):
     return(unique_list)
 
 
-# In[6]:
+# In[ ]:
 
 
 
 
 
-# In[17]:
+# In[57]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -172,7 +208,7 @@ df2 = df2[~df2['Symbol'].str.contains(pat)]
 df3 = df3[~df3['Symbol'].str.contains(pat)]
 
 #choose size
-size=300
+size=100
 stocks = list(df1["Symbol"].sample(n=int(size/3)))
 mfunds = list(df2["Symbol"].sample(n=int(size/3)))
 bonds = list(df3["Symbol"].sample(n=int(size/3)))
@@ -251,11 +287,25 @@ else:
     print("downloading symbols.txt")
     processStocks(symbols)
     
+
+
+# In[58]:
+
+
+#symbols = ['BTC-USD']
+#processStocks(symbols)
+
 symbols_data = pd.read_csv('symbols_data.csv', sep=',')[0:-1]
 vetted_symbols = symbols_data.Symbol.unique()
 
 
-# In[18]:
+# In[ ]:
+
+
+
+
+
+# In[59]:
 
 
 returnsdf = pd.DataFrame()
@@ -294,7 +344,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[19]:
+# In[60]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -307,7 +357,7 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[20]:
+# In[61]:
 
 
 #cumulative returns over test period
@@ -333,11 +383,10 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[21]:
+# In[62]:
 
 
 limit = 100
-n_forward = 7
 
 train_size = 0.5
 
@@ -351,8 +400,15 @@ width1 = len(benchData.loc[start_date:end_date1].index)
 #width2 = len(data.loc[end_date1+timedelta(days=1):end_date].index)
 width2 = len(benchData.loc[end_date1+timedelta(days=1):end_date].index)
 
-dateindex2 = benchData.loc[end_date1+timedelta(days=1):end_date].index
-    
+
+dateindex = benchData.loc[start_date:end_date].index
+dateindex_ = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date)-start_date).days)]
+dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-start_date).days)]
+
+dateindex2 = benchData.loc[end_date1:end_date].index
+
+dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
+
 sp500_data = benchData[end_date1+timedelta(days=1):end_date]['Close'].pct_change()
 sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
 plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
@@ -364,7 +420,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
 
-# In[ ]:
+# In[63]:
 
 
 #for symbol in topXPercent:
@@ -375,6 +431,30 @@ def processSets(symbol):
     subset['Forward Close'] = subset['Close'].shift(-n_forward)
     subset['Forward Return'] = (subset['Forward Close'] - subset['Close'])/subset['Close']
     subset['VWP'] = subset['Close']*subset['Volume']
+    
+    Short_EVWMA = pd.DataFrame(TA.EVWMA(subset,12))
+    Long_EVWMA = pd.DataFrame(TA.EVWMA(subset,26))
+    Short_EVWMA.columns = ['EVWMA_12']
+    Long_EVWMA.columns = ['EVWMA_26']
+
+    #p 209 of ttr doc
+    MACD_EVWMA = pd.DataFrame(Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])
+    MACD_EVWMA.columns = ['MACD-line']
+
+    Signal_EVWMA = pd.DataFrame(ta.ema(MACD_EVWMA["MACD-line"], length=9))
+    Signal_EVWMA.columns = ['Signal_EMA_9_MACD']
+    subset['MACD_Signal'] = Signal_EVWMA
+    
+    prices = subset.loc[~subset.index.duplicated(keep='last')]        
+    prices = subset.reset_index()
+
+    idx1 = subset.index  
+
+    merged = idx1.union(idx2)
+    s = subset.reindex(merged)
+    df = s.interpolate().dropna(axis=0, how='any')
+
+    subset = df
 
     trades = []
     expectedReturns = []
@@ -384,6 +464,7 @@ def processSets(symbol):
     #rolling windows
     for i in range(0,width1):
         temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
+        #temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
         adf_results = ts.adfuller(temp['Close'], 1)
         H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
         
@@ -430,41 +511,45 @@ def processSets(symbol):
         elif strategy == "SMA":
             temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
 
-        #print("before ifs")
-        if result[0]['p-value'] > .1:
-            #print(result[0]['p-value'])
-            if result[0]['training_forward_return'] > minExpectedReturn:
-                if result[0]['test_forward_return'] > minExpectedReturn:
-                    
-                    #trending
-                    if H > 0.5 or adf_results[1] > 0.05:
+        if result[0]['training_forward_return'] > minExpectedReturn:
+            if result[0]['test_forward_return'] > minExpectedReturn:
 
-                        if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
+                #trending
+                if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal']:
 
-                            #add to list of trades
-                            trades.append(temp.index[-1])
-                            expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                            sdevs.append(np.std(temp['Forward Return']))
+                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
 
-                            #print(result[0])
-                            #print(temp[-1:][indicator])
+                        #add to list of trades
+                        trades.append(temp.index[-1])
+                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                        sdevs.append(np.std(temp['Forward Return']))
+                
+                    #print("before ifs")
+                    elif result[0]['p-value'] > .1:
+                        #print(result[0]['p-value'])
+                        trades.append(temp.index[-1])
+                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                        sdevs.append(np.std(temp['Forward Return']))
 
-                            #print(temp[-1:][strategy])
+                        #print(result[0])
+                        #print(temp[-1:][indicator])
 
-                            #plt.plot(temp[indicator],label=symbol)
+                        #print(temp[-1:][strategy])
 
-                            #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
+                        #plt.plot(temp[indicator],label=symbol)
 
-                            #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                            #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                        #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
 
-                            #plt.legend()
+                        #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                        #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
 
-                            #plt.show()
+                        #plt.legend()
 
-                            #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                            #plt.show()        
-    
+                        #plt.show()
+
+                        #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
+                        #plt.show()        
+
     #print("starting set")
     set = pd.DataFrame()
     for i in range(0,len(trades)):
@@ -486,16 +571,13 @@ futures3 = [pool3.submit(processSets, args) for args in topXPercent]
 wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
-# In[ ]:
+# In[66]:
 
 
-#set[dateindex2.iloc[0]:dateindex2.iloc[-1]]
-#pd.DataFrame(dateindex2).loc[0]
-#:pd.DataFrame(dateindex2).loc[-1]
-set
 
 
-# In[ ]:
+
+# In[67]:
 
 
 
@@ -507,7 +589,9 @@ holds = []
 
 for f in futures3:
     #throwing a weird date error with one dataframe (had date outside of range)
+    
     set = pd.DataFrame(f.result())[(end_date1+timedelta(days=1)).strftime('%Y-%m-%d'):end_date.strftime('%Y-%m-%d')]
+    
     if (len(set) != 0):
         #display(set)
         #plt.hist(set['sdev'], bins='auto')  # arguments are passed to np.histogram
@@ -542,11 +626,17 @@ for f in futures3:
 
                 if len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward>=len(data[start_date.strftime('%Y-%m-%d'):]):
                     dateToBesold = np.nan    
+                    #dateToBeSold = frequency[frequency.get_loc(idate)+n_forward].strftime('%Y-%m-%d')
+                    #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')
                     temp['valueAtSale'] = np.nan
                 else:
-                    dateToBeSold = data.iloc[len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward].name
 
-                    temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date.strftime('%Y-%m-%d'):idate])-1+n_forward]).transpose()['Close'].values[0].copy()
+                    #dateToBeSold = data.iloc[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
+                    dateToBeSold = frequency[frequency.get_loc(datetime.datetime.strptime(idate, "%Y-%m-%d").date())+n_forward].strftime('%Y-%m-%d')
+                    #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')
+
+                    #temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
+                    temp['valueAtSale'] = data.loc[dateToBeSold]['Close']
 
                 temp['date'] = [idate]
                 temp['valueAtPurchase'] = set.loc[idate]['Close']
@@ -574,14 +664,19 @@ for f in futures3:
             if (idate in sellDates.set_index('date').index):    
                 temp = pd.DataFrame()
 
-                dateBought = data.iloc[len(data[start_date.strftime('%Y-%m-%d'):idate])-1-n_forward].name
+                dateBought = frequency[frequency.get_loc(datetime.datetime.strptime(idate, "%Y-%m-%d").date())-n_forward].strftime('%Y-%m-%d')
+                #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])-1-n_forward].strftime('%Y-%m-%d')
+                #dateBought = data.iloc[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')   
+
                 dateToBeSold = idate
                 temp['dateBought'] = [dateBought]
                 temp['dateToBeSold'] = dateToBeSold
-                temp['valueAtPurchase'] = pd.DataFrame(data.iloc[len(data[start_date.strftime('%Y-%m-%d'):idate])-1-n_forward]).transpose()['Close'].values[0].copy()
+                #temp['valueAtPurchase'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
+                temp['valueAtPurchase'] = data.loc[dateBought]['Close']
                 estRet = set.loc[dateBought]['ExpectedReturn']
                 temp['estRet'] = estRet
-                temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date.strftime('%Y-%m-%d'):idate])-1]).transpose()['Close'].values[0]
+                temp['valueAtSale'] = data.loc[dateToBeSold]['Close']
+                #temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
 
                 #temp['dateToBeSold'] = idate
                 #temp['estRet'] = data.loc[idate]['Forward Return']
@@ -598,9 +693,12 @@ for f in futures3:
 
                 orderbook = orderbook.append(temp,ignore_index=True)
 
+
         #display(orderbook.sort_values(by=['date','orderside'], ascending=True))
 
         funds = 1000
+        BuyFundsPercent = .75
+        percentHeldOnSell = 1
 
         buyLog = pd.DataFrame()
         sellLog = pd.DataFrame()
@@ -616,9 +714,9 @@ for f in futures3:
             rtemp = pd.DataFrame()
             _temp = pd.DataFrame()
 
-            idate = i.strftime('%Y-%m-%d')
+            t = i.strftime('%Y-%m-%d')
 
-            subset = orderbook[orderbook['date']==idate]
+            subset = orderbook[orderbook['date']==t]
             gain = 0
             paid = 0
 
@@ -673,8 +771,8 @@ for f in futures3:
                     remainder = (sum(buyLog['qty']))
 
                 rtemp['held'] = remainder
-                rtemp['value'] = remainder * data.loc[idate]['Close']
-                rtemp['portValue'] = funds + remainder * data.loc[idate]['Close']
+                rtemp['value'] = remainder * data.loc[t]['Close']
+                rtemp['portValue'] = funds + remainder * data.loc[t]['Close']
 
                 #print("in " + str(gain))
                 #print("out " + str(paid))
@@ -686,6 +784,7 @@ for f in futures3:
                 #print()
 
                 runningLog = runningLog.append(rtemp)
+
 
         ret_data =  runningLog.set_index('date')['portValue'].pct_change()
         cumulative_ret_data = (ret_data + 1).cumprod()
@@ -712,7 +811,7 @@ plt.legend(loc="upper left",fontsize=8)
 plt.xticks(rotation=30) 
 
 
-# In[ ]:
+# In[68]:
 
 
 

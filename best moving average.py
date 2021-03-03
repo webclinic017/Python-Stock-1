@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[328]:
+# In[406]:
 
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[359]:
+# In[407]:
 
 
 
@@ -30,14 +30,14 @@ from finta import TA
 from scipy.stats import ttest_ind
 
 
-# In[360]:
+# In[408]:
 
 
 
 n_forward = 7
-name = 'BTC-USD'
+#name = 'BTC-USD'
 #name = 'GLD'
-#name = 'SPY'
+name = 'SPY'
 #name = 'GOOG'
 
 #strategy = "EMA"
@@ -52,7 +52,7 @@ end_date1 = end_date - timedelta(weeks=w)
 start_date = end_date1 - timedelta(weeks=w)
 
 
-# In[361]:
+# In[409]:
 
 
 nyse = mcal.get_calendar('NYSE')
@@ -97,17 +97,18 @@ len(benchData)
 len(data)
 
 
-# In[362]:
+# In[ ]:
 
 
 
 
 
-# In[363]:
+# In[410]:
 
 
 
 dateindex = data.loc[start_date:end_date].index
+dateindex_ = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date)-start_date).days)]
 dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-start_date).days)]
 
 dateindex2 = data.loc[end_date1:end_date].index
@@ -115,15 +116,17 @@ dateindex2 = data.loc[end_date1:end_date].index
 dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
 
 
-# In[364]:
+# In[411]:
 
 
-if(len(data)==len(dateindex)):
+if(len(data)==len(dateindex_)):
     frequency=dateindex_n_forward
+    
 else:
     frequency=nyse_trading_dates
+    #frequency = pd.DataFrame(frequency).set_index(0).index
     
-frequency = pd.DataFrame(frequency).set_index(0).index
+frequency = frequency.index
 
 
 # In[ ]:
@@ -132,7 +135,7 @@ frequency = pd.DataFrame(frequency).set_index(0).index
 
 
 
-# In[365]:
+# In[417]:
 
 
 limit = 100
@@ -285,7 +288,7 @@ plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histo
 
 
 
-# In[366]:
+# In[418]:
 
 
 
@@ -380,7 +383,7 @@ for i in dateindex2:
         orderbook = orderbook.append(temp,ignore_index=True)
 
 
-# In[367]:
+# In[419]:
 
 
 
@@ -391,7 +394,7 @@ for i in dateindex2:
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
-# In[368]:
+# In[420]:
 
 
 
@@ -486,19 +489,19 @@ for i in dateindex2:
         
 
 
-# In[ ]:
+# In[422]:
 
 
 
 
 
-# In[ ]:
+# In[424]:
 
 
 
 
 
-# In[369]:
+# In[427]:
 
 
 ret_data =  runningLog.set_index('date')['portValue'].pct_change()
@@ -507,7 +510,7 @@ cumulative_ret_data = (ret_data + 1).cumprod()
 ret_data2 = data[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
 cum_ret_data2 = (ret_data2 + 1).cumprod()
 
-sp500_data = benchData[runningLog.set_index('date').index[1]:runningLog.set_index('date').index[-1]]['Close'].pct_change()
+sp500_data = benchData[runningLog.set_index('date').index[1]:]['Close'].pct_change()
 sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
 
 plt.plot(cumulative_ret_data,label=name + " strategy @ " + str(BuyFundsPercent) )
