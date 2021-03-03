@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[385]:
+# In[448]:
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[386]:
+# In[449]:
 
 
 
@@ -33,14 +33,14 @@ from scipy.stats import ttest_ind
 # In[408]:
 
 
-# In[387]:
+# In[450]:
 
 
 
 
 n_forward = 1
-name = 'BTC-USD'
-#name = 'GLD'
+#name = 'BTC-USD'
+name = 'GLD'
 #name = 'SPY'
 #name = 'GOOG'
 
@@ -50,8 +50,8 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-end_date = datetime.date.today()
-#end_date = datetime.date.today() - timedelta(weeks=w)
+#end_date = datetime.date.today()
+end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 start_date = end_date1 - timedelta(weeks=w)
 
@@ -59,7 +59,7 @@ start_date = end_date1 - timedelta(weeks=w)
 # In[409]:
 
 
-# In[388]:
+# In[451]:
 
 
 
@@ -104,7 +104,7 @@ len(benchData)
 len(data)
 
 
-# In[389]:
+# In[452]:
 
 
 
@@ -119,7 +119,7 @@ dateindex2_n_forward = [end_date1 + datetime.timedelta(days=x) for x in range(0,
 
 
 
-# In[390]:
+# In[453]:
 
 
 
@@ -140,7 +140,7 @@ idx2 = frequency
 idx2 = pd.to_datetime(idx2, errors='coerce')
 
 
-# In[391]:
+# In[454]:
 
 
 
@@ -162,25 +162,25 @@ data = df
 
 
 
-# In[393]:
+# In[ ]:
 
 
 
 
 
-# In[394]:
+# In[ ]:
 
 
 
 
 
-# In[402]:
+# In[458]:
 
 
 
 
 
-# In[403]:
+# In[ ]:
 
 
 
@@ -268,7 +268,7 @@ for i in range(0,width1):
     elif strategy == "SMA":
         temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
        
-    if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0:
+    if H > 0.5 or adf_results[1] > 0.05 or temp.iloc[-1]['MACD_Signal'] > 0:
         trades.append(temp.index[-1].strftime('%Y-%m-%d'))
         expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
         sdevs.append(np.std(temp['Forward Return']))
@@ -318,7 +318,7 @@ plt.show()
 
 
 
-# In[404]:
+# In[ ]:
 
 
 
@@ -355,7 +355,7 @@ plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histo
 
 
 
-# In[405]:
+# In[ ]:
 
 
 
@@ -451,13 +451,13 @@ for i in dateindex2:
         orderbook = orderbook.append(temp,ignore_index=True)
 
 
-# In[406]:
+# In[ ]:
 
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
-# In[407]:
+# In[ ]:
 
 
 
@@ -552,7 +552,7 @@ for i in dateindex2:
         
 
 
-# In[408]:
+# In[ ]:
 
 
 
