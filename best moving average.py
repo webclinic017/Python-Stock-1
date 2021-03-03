@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
+# In[317]:
 
 
-#https://nomodulenamed.com/m/pandas.core.ops.roperator
+
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
-#"pandas==1.0.3"
 
 
-# In[2]:
+# In[318]:
 
-
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[22]:
 
 
 import yfinance
@@ -34,6 +28,11 @@ import pandas_market_calendars as mcal
 
 from scipy.stats import ttest_ind
 
+
+# In[319]:
+
+
+
 n_forward = 7
 name = 'BTC-USD'
 #name = 'GLD'
@@ -46,15 +45,16 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-end_date = datetime.date.today()
-#end_date = datetime.date.today() - timedelta(weeks=w)
+#end_date = datetime.date.today()
+end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
-
-#- timedelta(weeks=w*2)
 start_date = end_date1 - timedelta(weeks=w)
 
-nyse = mcal.get_calendar('NYSE')
-official_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
+
+# In[ ]:
+
+
+
 
 ticker = yfinance.Ticker(name)
 data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
@@ -65,22 +65,52 @@ data['VWP'] = data['Close']*data['Volume']
 benchName = "^GSPC"
 bench = yfinance.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
+len(benchData)
+len(data)
 
 
 # In[ ]:
 
 
-# In[64]:
 
-# In[65]:
+
+
+# In[ ]:
 
 
 
 dateindex = data.loc[start_date:end_date].index
+dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-start_date).days)]
+
+dateindex2 = data.loc[end_date1:end_date].index
+
+dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
+
+nyse = mcal.get_calendar('NYSE')
+nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
+
+
+# In[ ]:
+
+
+if(len(data)==len(dateindex)):
+    frequency=dateindex_n_forward
+else:
+    frequency=nyse_trading_dates
+    
+frequency = pd.DataFrame(frequency).set_index(0).index
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
 
 
 limit = 100
-n_forward = 7
 
 train_size = 0.5
 
@@ -102,25 +132,26 @@ for i in range(0,width1):
     
     #dateToBeSold = ((official_trading_dates.loc[i][0].strftime('%Y-%m-%d')+n_forward).strftime('%Y-%m-%d') 
     
-    ts1 = pd.DataFrame()
-    ts1["Date"] = temp.index
-    ts1[indicator] = temp.VWP.values
-    ts1.columns = ['ds', 'y']
+    #ts1 = pd.DataFrame()
+    #ts1["Date"] = temp.index
+    #ts1[indicator] = temp.VWP.values
+    #ts1.columns = ['ds', 'y']
 
     #no need to strip last day from model becuase df_inner (which ts is based on) is already -2
-    m = Prophet(daily_seasonality=True,yearly_seasonality=True)
-    m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
-    m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
-    m.fit(ts1)
+    #m = Prophet(daily_seasonality=True,yearly_seasonality=True)
+    #m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+    #m.add_seasonality(name='quarterly', period=91.25, fourier_order=7)
+    #m.fit(ts1)
 
     #forecast only last day in model (can verify result) needs to be based on df.loc (similar to df_inner)
     #forecast = pd.DataFrame([pd.DataFrame(official_trading_dates.index).loc[pd.DatetimeIndex(official_trading_dates.index).get_loc(temp.index[-1].strftime('%Y-%m-%d'))+n_forward-2][0].strftime('%Y-%m-%d')])
-    forecast = pd.DataFrame([(temp.index[-1] + timedelta(days=n_forward)).strftime('%Y-%m-%d')]) 
+    #forecast = pd.DataFrame([(temp.index[-1] + timedelta(days=n_forward)).strftime('%Y-%m-%d')]) 
+    #forecast = pd.DataFrame([frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')])
     
-    forecast.columns = ['ds']
+    #forecast.columns = ['ds']
 
     #Predict and plot
-    pred = m.predict(forecast)
+    #pred = m.predict(forecast)
                 
     result = []
     
@@ -163,50 +194,44 @@ for i in range(0,width1):
     elif strategy == "SMA":
         temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
         
-    if result[0]['p-value'] > .1:
+    if result[0]['p-value'] > .1 or H > 0.5 or adf_results[1] > 0.05:
         #print(result[0]['p-value'])
         if result[0]['training_forward_return'] > minExpectedReturn:
             if result[0]['test_forward_return'] > minExpectedReturn:
-                if H > 0.5 or adf_results[1] > 0.05:
+                #if H > 0.5 or adf_results[1] > 0.05:
                 #if True:
 
-                    if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) or (pred['yhat'][0] > temp.iloc[-1][indicator]):
+                if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
+                #or (pred['yhat'][0] > temp.iloc[-1][indicator]):
 
-                        #add to list of trades
-                        trades.append(temp.index[-1].strftime('%Y-%m-%d'))
-                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                        sdevs.append(np.std(temp['Forward Return']))
+                    #add to list of trades
+                    trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+                    expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                    sdevs.append(np.std(temp['Forward Return']))
 
-                        #print(result[0])
-                        #print(temp[-1:][indicator])
+                    #print(result[0])
+                    #print(temp[-1:][indicator])
 
-                        #print(temp[-1:][strategy])
+                    #print(temp[-1:][strategy])
 
-                        #plt.plot(temp[indicator],label=name)
+                    #plt.plot(temp[indicator],label=name)
 
-                        #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
+                    #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
 
-                        #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                        #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                    #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
+                    #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
 
-                        #plt.legend()
+                    #plt.legend()
 
-                        #plt.show()
+                    #plt.show()
 
-                        #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                        #plt.show()        
+                    #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
+                    #plt.show()        
 
 plt.hist(sdevs, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
-
-
-# In[ ]:
-
-
-# In[66]:
-
 
 
 start = 1000
@@ -222,9 +247,18 @@ for i in range(0,len(trades)):
 
 plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histogram
 
-orderbook = pd.DataFrame()
 
-dateindex2 = data.loc[end_date1:end_date].index
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+orderbook = pd.DataFrame()
 
 #temp = pd.DataFrame([dateToBeSold,1],columns=['date','qty'])
 column_names = ["date", "qty"]
@@ -247,11 +281,17 @@ for i in dateindex2:
         
         if len(data[start_date:idate])-1+n_forward>=len(data[start_date:]):
             dateToBesold = np.nan    
+            #dateToBeSold = frequency[frequency.get_loc(idate)+n_forward].strftime('%Y-%m-%d')
+            #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')
             temp['valueAtSale'] = np.nan
         else:
-            dateToBeSold = data.iloc[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
             
-            temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
+            #dateToBeSold = data.iloc[len(data[start_date:idate])-1+n_forward].name.strftime('%Y-%m-%d') 
+            dateToBeSold = frequency[frequency.get_loc(datetime.datetime.strptime(idate, "%Y-%m-%d").date())+n_forward].strftime('%Y-%m-%d')
+            #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')
+            
+            #temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1+n_forward]).transpose()['Close'].values[0]            
+            temp['valueAtSale'] = data.loc[dateToBeSold]['Close']
          
         temp['date'] = [idate]
         temp['valueAtPurchase'] = set.loc[idate]['Close']
@@ -279,14 +319,19 @@ for i in dateindex2:
     if (idate in sellDates.set_index('date').index):    
         temp = pd.DataFrame()
 
-        dateBought = data.iloc[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')        
+        dateBought = frequency[frequency.get_loc(datetime.datetime.strptime(idate, "%Y-%m-%d").date())-n_forward].strftime('%Y-%m-%d')
+        #frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])-1-n_forward].strftime('%Y-%m-%d')
+        #dateBought = data.iloc[len(data[start_date:idate])-1-n_forward].name.strftime('%Y-%m-%d')   
+        
         dateToBeSold = idate
         temp['dateBought'] = [dateBought]
         temp['dateToBeSold'] = dateToBeSold
-        temp['valueAtPurchase'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
+        #temp['valueAtPurchase'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1-n_forward]).transpose()['Close'].values[0]
+        temp['valueAtPurchase'] = data.loc[dateBought]['Close']
         estRet = set.loc[dateBought]['ExpectedReturn']
         temp['estRet'] = estRet
-        temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
+        temp['valueAtSale'] = data.loc[dateToBeSold]['Close']
+        #temp['valueAtSale'] = pd.DataFrame(data.iloc[len(data[start_date:idate])-1]).transpose()['Close'].values[0]
         
         #temp['dateToBeSold'] = idate
         #temp['estRet'] = data.loc[idate]['Forward Return']
@@ -303,19 +348,21 @@ for i in dateindex2:
 
         orderbook = orderbook.append(temp,ignore_index=True)
 
-        
-
 
 # In[ ]:
 
 
-# In[67]:
 
 
 
 
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
+
+
+# In[ ]:
+
+
 
 funds = 1000
 BuyFundsPercent = .75
@@ -408,7 +455,21 @@ for i in dateindex2:
         
 
 
-# In[68]:
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
 
 
 
