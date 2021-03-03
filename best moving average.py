@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[406]:
-
+# In[385]:
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[407]:
+# In[386]:
+
 
 
 
@@ -33,11 +33,15 @@ from scipy.stats import ttest_ind
 # In[408]:
 
 
+# In[387]:
 
-n_forward = 7
-#name = 'BTC-USD'
+
+
+
+n_forward = 1
+name = 'BTC-USD'
 #name = 'GLD'
-name = 'SPY'
+#name = 'SPY'
 #name = 'GOOG'
 
 #strategy = "EMA"
@@ -55,10 +59,13 @@ start_date = end_date1 - timedelta(weeks=w)
 # In[409]:
 
 
+# In[388]:
+
+
+
+
 nyse = mcal.get_calendar('NYSE')
 nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
-
-idx2 = nyse_trading_dates.index
 
 ticker = yfinance.Ticker(name)
 data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
@@ -97,13 +104,8 @@ len(benchData)
 len(data)
 
 
-# In[ ]:
+# In[389]:
 
-
-
-
-
-# In[410]:
 
 
 
@@ -113,20 +115,45 @@ dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0,
 
 dateindex2 = data.loc[end_date1:end_date].index
 
-dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
+dateindex2_n_forward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
 
 
-# In[411]:
+
+# In[390]:
 
 
-if(len(data)==len(dateindex_)):
-    frequency=dateindex_n_forward
+
+
+#if(len(data)==len(dateindex_)):
+if(len(data)>len(nyse_trading_dates)):
+    frequency=pd.DataFrame(dateindex_n_forward).set_index(0)
     
 else:
     frequency=nyse_trading_dates
     #frequency = pd.DataFrame(frequency).set_index(0).index
     
 frequency = frequency.index
+
+idx2 = frequency
+
+#https://stackoverflow.com/questions/40815238/python-pandas-convert-index-to-datetime
+idx2 = pd.to_datetime(idx2, errors='coerce')
+
+
+# In[391]:
+
+
+
+prices = data.loc[~data.index.duplicated(keep='last')]        
+prices = data.reset_index()
+
+idx1 = prices.set_index('Date').index  
+
+merged = idx1.union(idx2)
+s = prices.set_index('Date').reindex(merged)
+df = s.interpolate().dropna(axis=0, how='any')
+
+data = df
 
 
 # In[ ]:
@@ -135,7 +162,26 @@ frequency = frequency.index
 
 
 
-# In[417]:
+# In[393]:
+
+
+
+
+
+# In[394]:
+
+
+
+
+
+# In[402]:
+
+
+
+
+
+# In[403]:
+
 
 
 limit = 100
@@ -153,7 +199,7 @@ width1 = len(data.loc[start_date:end_date1].index)
 width2 = len(data.loc[end_date1+timedelta(days=1):end_date].index)
 
 for i in range(0,width1):
-    temp = data.loc[dateindex[i]:dateindex[i+width2]].copy()
+    temp = data.loc[frequency[i]:frequency[i+width2]].copy()
     
     adf_results = ts.adfuller(temp['Close'], 1)
     H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
@@ -222,23 +268,20 @@ for i in range(0,width1):
     elif strategy == "SMA":
         temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
        
-    if result[0]['training_forward_return'] > minExpectedReturn:
-        if result[0]['test_forward_return'] > minExpectedReturn:
+    if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0:
+        trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+        sdevs.append(np.std(temp['Forward Return']))
+        
+    #t test passed
+    elif result[0]['p-value'] > .1:
 
-            if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0:
-                trades.append(temp.index[-1].strftime('%Y-%m-%d'))
-                expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                sdevs.append(np.std(temp['Forward Return']))
+        if result[0]['training_forward_return'] > minExpectedReturn:
+            if result[0]['test_forward_return'] > minExpectedReturn:
 
-            elif result[0]['p-value'] > .1 :
-                #print(result[0]['p-value'])
-                #if H > 0.5 or adf_results[1] > 0.05:
-                #if True:
-
+                #just MA strategy
+                #if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0 or 
                 if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
-                #or (pred['yhat'][0] > temp.iloc[-1][indicator]):
-
-                    #add to list of trades
                     trades.append(temp.index[-1].strftime('%Y-%m-%d'))
                     expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
                     sdevs.append(np.std(temp['Forward Return']))
@@ -268,6 +311,18 @@ plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 
 
+
+# In[ ]:
+
+
+
+
+
+# In[404]:
+
+
+
+
 start = 1000
 
 set = pd.DataFrame()
@@ -288,7 +343,20 @@ plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histo
 
 
 
-# In[418]:
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[405]:
+
 
 
 
@@ -383,18 +451,13 @@ for i in dateindex2:
         orderbook = orderbook.append(temp,ignore_index=True)
 
 
-# In[419]:
-
-
-
-
-
+# In[406]:
 
 
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
-# In[420]:
+# In[407]:
 
 
 
@@ -489,19 +552,8 @@ for i in dateindex2:
         
 
 
-# In[422]:
+# In[408]:
 
-
-
-
-
-# In[424]:
-
-
-
-
-
-# In[427]:
 
 
 ret_data =  runningLog.set_index('date')['portValue'].pct_change()
