@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[317]:
+# In[328]:
 
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[318]:
+# In[359]:
 
 
 
@@ -25,11 +25,12 @@ import statsmodels.tsa.stattools as ts
 from hurst import compute_Hc
 from fbprophet import Prophet
 import pandas_market_calendars as mcal
+from finta import TA
 
 from scipy.stats import ttest_ind
 
 
-# In[319]:
+# In[360]:
 
 
 
@@ -45,22 +46,49 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-#end_date = datetime.date.today()
-end_date = datetime.date.today() - timedelta(weeks=w)
+end_date = datetime.date.today()
+#end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 start_date = end_date1 - timedelta(weeks=w)
 
 
-# In[ ]:
+# In[361]:
 
 
+nyse = mcal.get_calendar('NYSE')
+nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
 
+idx2 = nyse_trading_dates.index
 
 ticker = yfinance.Ticker(name)
 data = ticker.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 data['Forward Close'] = data['Close'].shift(-n_forward)
 data['Forward Return'] = (data['Forward Close'] - data['Close'])/data['Close']
 data['VWP'] = data['Close']*data['Volume']
+
+Short_EVWMA = pd.DataFrame(TA.EVWMA(data,12))
+Long_EVWMA = pd.DataFrame(TA.EVWMA(data,26))
+Short_EVWMA.columns = ['EVWMA_12']
+Long_EVWMA.columns = ['EVWMA_26']
+
+#p 209 of ttr doc
+MACD_EVWMA = pd.DataFrame(Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])
+MACD_EVWMA.columns = ['MACD-line']
+
+Signal_EVWMA = pd.DataFrame(ta.ema(MACD_EVWMA["MACD-line"], length=9))
+Signal_EVWMA.columns = ['Signal_EMA_9_MACD']
+data['MACD_Signal'] = Signal_EVWMA
+
+prices = data.loc[~data.index.duplicated(keep='last')]        
+prices = data.reset_index()
+
+idx1 = prices.index  
+
+merged = idx1.union(idx2)
+s = prices.reindex(merged)
+df = s.interpolate().dropna(axis=0, how='any')
+
+data = df.set_index('Date')
 
 benchName = "^GSPC"
 bench = yfinance.Ticker(benchName)
@@ -69,13 +97,13 @@ len(benchData)
 len(data)
 
 
-# In[ ]:
+# In[362]:
 
 
 
 
 
-# In[ ]:
+# In[363]:
 
 
 
@@ -86,11 +114,8 @@ dateindex2 = data.loc[end_date1:end_date].index
 
 dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
 
-nyse = mcal.get_calendar('NYSE')
-nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
 
-
-# In[ ]:
+# In[364]:
 
 
 if(len(data)==len(dateindex)):
@@ -107,7 +132,7 @@ frequency = pd.DataFrame(frequency).set_index(0).index
 
 
 
-# In[ ]:
+# In[365]:
 
 
 limit = 100
@@ -193,11 +218,17 @@ for i in range(0,width1):
         
     elif strategy == "SMA":
         temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
-        
-    if result[0]['p-value'] > .1 or H > 0.5 or adf_results[1] > 0.05:
-        #print(result[0]['p-value'])
-        if result[0]['training_forward_return'] > minExpectedReturn:
-            if result[0]['test_forward_return'] > minExpectedReturn:
+       
+    if result[0]['training_forward_return'] > minExpectedReturn:
+        if result[0]['test_forward_return'] > minExpectedReturn:
+
+            if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0:
+                trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+                expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+                sdevs.append(np.std(temp['Forward Return']))
+
+            elif result[0]['p-value'] > .1 :
+                #print(result[0]['p-value'])
                 #if H > 0.5 or adf_results[1] > 0.05:
                 #if True:
 
@@ -254,7 +285,7 @@ plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histo
 
 
 
-# In[ ]:
+# In[366]:
 
 
 
@@ -349,7 +380,7 @@ for i in dateindex2:
         orderbook = orderbook.append(temp,ignore_index=True)
 
 
-# In[ ]:
+# In[367]:
 
 
 
@@ -360,7 +391,7 @@ for i in dateindex2:
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
-# In[ ]:
+# In[368]:
 
 
 
@@ -467,10 +498,7 @@ for i in dateindex2:
 
 
 
-# In[ ]:
-
-
-
+# In[369]:
 
 
 ret_data =  runningLog.set_index('date')['portValue'].pct_change()
