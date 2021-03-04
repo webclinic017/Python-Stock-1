@@ -424,7 +424,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
 
-# In[ ]:
+# In[128]:
 
 
 #for symbol in topXPercent:
@@ -515,12 +515,28 @@ def processSets(symbol):
         elif strategy == "SMA":
             temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
 
-        if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+        conditions = 0
+        
+        if (temp.iloc[-1]['MACD_Signal'] > 0) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):    
+            #44%
+            #(temp.iloc[-1]['MACD_Signal'] > 0) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+            
+            #16%
+            #if (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+            
             #16%
             #if (H > 0.5 or adf_results[1] > 0.05) and (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
             #and temp.iloc[-1]['MACD_Signal'] > 0:
 
-
+            #15% (beats hold)
+            #temp.iloc[-1]['MACD_Signal'] > 0:
+                
+            #6%
+            #if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+            
+            #6%
+            #(H > 0.5 or adf_results[1] > 0.05):
+        
             #add to list of trades
             trades.append(temp.index[-1])
             expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
@@ -554,7 +570,7 @@ wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
 
-# In[ ]:
+# In[129]:
 
 
 
@@ -788,7 +804,7 @@ plt.legend(loc="upper left",fontsize=8)
 plt.xticks(rotation=30) 
 
 
-# In[ ]:
+# In[130]:
 
 
 
