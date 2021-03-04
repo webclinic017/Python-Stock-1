@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[52]:
+# In[69]:
 
 
 import yfinance as yf
@@ -51,10 +51,10 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[53]:
+# In[70]:
 
 
-n_forward = 7
+n_forward = 1
 
 #name = 'GLD'
 #name = 'SPY'
@@ -78,7 +78,7 @@ bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[54]:
+# In[71]:
 
 
 
@@ -92,14 +92,13 @@ dateindex2_n_foward = [end_date1 + datetime.timedelta(days=x) for x in range(0, 
 nyse = mcal.get_calendar('NYSE')
 nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
 
-idx2 = nyse_trading_dates.index
+
+# In[72]:
 
 
-# In[55]:
-
-
-if(len(benchData)==len(dateindex_)):
-    frequency=dateindex_n_forward
+#if(len(data)==len(dateindex_)):
+if(len(benchData)>len(nyse_trading_dates)):
+    frequency=pd.DataFrame(dateindex_n_forward).set_index(0)
     
 else:
     frequency=nyse_trading_dates
@@ -107,14 +106,19 @@ else:
     
 frequency = frequency.index
 
+idx2 = frequency
 
-# In[ ]:
+#https://stackoverflow.com/questions/40815238/python-pandas-convert-index-to-datetime
+idx2 = pd.to_datetime(idx2, errors='coerce')
+
+
+# In[74]:
 
 
 
 
 
-# In[56]:
+# In[75]:
 
 
 def unique(list1):
@@ -137,7 +141,7 @@ def unique(list1):
 
 
 
-# In[57]:
+# In[76]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -289,7 +293,7 @@ else:
     
 
 
-# In[58]:
+# In[77]:
 
 
 #symbols = ['BTC-USD']
@@ -305,7 +309,7 @@ vetted_symbols = symbols_data.Symbol.unique()
 
 
 
-# In[59]:
+# In[78]:
 
 
 returnsdf = pd.DataFrame()
@@ -344,7 +348,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[60]:
+# In[79]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -357,7 +361,7 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[61]:
+# In[80]:
 
 
 #cumulative returns over test period
@@ -383,7 +387,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[62]:
+# In[81]:
 
 
 limit = 100
@@ -420,7 +424,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
 
-# In[63]:
+# In[ ]:
 
 
 #for symbol in topXPercent:
@@ -463,7 +467,7 @@ def processSets(symbol):
 
     #rolling windows
     for i in range(0,width1):
-        temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
+        temp = subset.loc[frequency[i].strftime('%Y-%m-%d'):frequency[i+width2].strftime('%Y-%m-%d')].copy()
         #temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
         adf_results = ts.adfuller(temp['Close'], 1)
         H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
@@ -511,44 +515,17 @@ def processSets(symbol):
         elif strategy == "SMA":
             temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
 
-        if result[0]['training_forward_return'] > minExpectedReturn:
-            if result[0]['test_forward_return'] > minExpectedReturn:
+        if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+            #16%
+            #if (H > 0.5 or adf_results[1] > 0.05) and (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
+            #and temp.iloc[-1]['MACD_Signal'] > 0:
 
-                #trending
-                if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal']:
 
-                    if temp.iloc[-1][indicator]>temp.iloc[-1][strategy]:
-
-                        #add to list of trades
-                        trades.append(temp.index[-1])
-                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                        sdevs.append(np.std(temp['Forward Return']))
-                
-                    #print("before ifs")
-                    elif result[0]['p-value'] > .1:
-                        #print(result[0]['p-value'])
-                        trades.append(temp.index[-1])
-                        expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                        sdevs.append(np.std(temp['Forward Return']))
-
-                        #print(result[0])
-                        #print(temp[-1:][indicator])
-
-                        #print(temp[-1:][strategy])
-
-                        #plt.plot(temp[indicator],label=symbol)
-
-                        #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
-
-                        #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                        #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-
-                        #plt.legend()
-
-                        #plt.show()
-
-                        #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                        #plt.show()        
+            #add to list of trades
+            trades.append(temp.index[-1])
+            expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
+            sdevs.append(np.std(temp['Forward Return']))
+            
 
     #print("starting set")
     set = pd.DataFrame()
@@ -577,7 +554,7 @@ wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
 
-# In[67]:
+# In[ ]:
 
 
 
@@ -811,7 +788,7 @@ plt.legend(loc="upper left",fontsize=8)
 plt.xticks(rotation=30) 
 
 
-# In[68]:
+# In[ ]:
 
 
 
