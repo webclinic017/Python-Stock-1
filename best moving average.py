@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[448]:
+# In[11]:
+
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[449]:
+# In[12]:
 
 
 
@@ -30,17 +31,20 @@ from finta import TA
 from scipy.stats import ttest_ind
 
 
-# In[408]:
-
-
-# In[450]:
+# In[ ]:
 
 
 
 
-n_forward = 1
-#name = 'BTC-USD'
-name = 'GLD'
+
+# In[13]:
+
+
+
+
+n_forward = 7
+name = 'BTC-USD'
+#name = 'GLD'
 #name = 'SPY'
 #name = 'GOOG'
 
@@ -50,16 +54,14 @@ strategy = "SMA"
 indicator = 'VWP'
 
 w=117
-#end_date = datetime.date.today()
-end_date = datetime.date.today() - timedelta(weeks=w)
+end_date = datetime.date.today()
+#end_date = datetime.date.today() - timedelta(weeks=w)
 end_date1 = end_date - timedelta(weeks=w)
 start_date = end_date1 - timedelta(weeks=w)
 
 
-# In[409]:
+# In[14]:
 
-
-# In[451]:
 
 
 
@@ -79,38 +81,34 @@ Short_EVWMA.columns = ['EVWMA_12']
 Long_EVWMA.columns = ['EVWMA_26']
 
 #p 209 of ttr doc
-MACD_EVWMA = pd.DataFrame(Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])
+MACD_EVWMA = pd.DataFrame((Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])/Long_EVWMA['EVWMA_26'])
 MACD_EVWMA.columns = ['MACD-line']
 
 Signal_EVWMA = pd.DataFrame(ta.ema(MACD_EVWMA["MACD-line"], length=9))
 Signal_EVWMA.columns = ['Signal_EMA_9_MACD']
 data['MACD_Signal'] = Signal_EVWMA
 
-prices = data.loc[~data.index.duplicated(keep='last')]        
-prices = data.reset_index()
-
-idx1 = prices.index  
-
-merged = idx1.union(idx2)
-s = prices.reindex(merged)
-df = s.interpolate().dropna(axis=0, how='any')
-
-data = df.set_index('Date')
-
 benchName = "^GSPC"
 bench = yfinance.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
-len(benchData)
-len(data)
+print(len(benchData))
+print(len(data))
 
 
-# In[452]:
+# In[ ]:
+
+
+
+
+
+# In[15]:
+
 
 
 
 
 dateindex = data.loc[start_date:end_date].index
-dateindex_ = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date)-start_date).days)]
+#dateindex_ = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date)-start_date).days)]
 dateindex_n_forward = [start_date + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-start_date).days)]
 
 dateindex2 = data.loc[end_date1:end_date].index
@@ -118,10 +116,7 @@ dateindex2 = data.loc[end_date1:end_date].index
 dateindex2_n_forward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
 
 
-
-# In[453]:
-
-
+# In[16]:
 
 
 #if(len(data)==len(dateindex_)):
@@ -140,7 +135,9 @@ idx2 = frequency
 idx2 = pd.to_datetime(idx2, errors='coerce')
 
 
-# In[454]:
+# In[17]:
+
+
 
 
 
@@ -157,24 +154,6 @@ data = df
 
 
 # In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[458]:
 
 
 
@@ -201,8 +180,8 @@ width2 = len(data.loc[end_date1+timedelta(days=1):end_date].index)
 for i in range(0,width1):
     temp = data.loc[frequency[i]:frequency[i+width2]].copy()
     
-    adf_results = ts.adfuller(temp['Close'], 1)
-    H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
+    #adf_results = ts.adfuller(temp['Close'], 1)
+    #H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
     
     #dateToBeSold = ((official_trading_dates.loc[i][0].strftime('%Y-%m-%d')+n_forward).strftime('%Y-%m-%d') 
     
@@ -218,10 +197,7 @@ for i in range(0,width1):
     #m.fit(ts1)
 
     #forecast only last day in model (can verify result) needs to be based on df.loc (similar to df_inner)
-    #forecast = pd.DataFrame([pd.DataFrame(official_trading_dates.index).loc[pd.DatetimeIndex(official_trading_dates.index).get_loc(temp.index[-1].strftime('%Y-%m-%d'))+n_forward-2][0].strftime('%Y-%m-%d')])
-    #forecast = pd.DataFrame([(temp.index[-1] + timedelta(days=n_forward)).strftime('%Y-%m-%d')]) 
-    #forecast = pd.DataFrame([frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')])
-    
+    #forecast = pd.DataFrame(pd.DataFrame(idx2)[0][(pd.DataFrame(idx2)[0] <= datetime.datetime.strptime(forecast_e[0][0], "%Y-%m-%d").date()) & (pd.DataFrame(idx2)[0] >= datetime.datetime.strptime(forecast_s[0][0], "%Y-%m-%d").date())])
     #forecast.columns = ['ds']
 
     #Predict and plot
@@ -268,50 +244,26 @@ for i in range(0,width1):
     elif strategy == "SMA":
         temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
        
-    if H > 0.5 or adf_results[1] > 0.05 or temp.iloc[-1]['MACD_Signal'] > 0:
+    conditions = 0
+    
+    if (result[0]['p-value'] > .05 and temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
+                
+        if (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn):
+            conditions = conditions + 1
+        
+    if conditions >= 1:    
         trades.append(temp.index[-1].strftime('%Y-%m-%d'))
         expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
         sdevs.append(np.std(temp['Forward Return']))
-        
-    #t test passed
-    elif result[0]['p-value'] > .1:
-
-        if result[0]['training_forward_return'] > minExpectedReturn:
-            if result[0]['test_forward_return'] > minExpectedReturn:
-
-                #just MA strategy
-                #if H > 0.5 or adf_results[1] > 0.05 or temp['MACD_Signal'] > 0 or 
-                if (temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
-                    trades.append(temp.index[-1].strftime('%Y-%m-%d'))
-                    expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
-                    sdevs.append(np.std(temp['Forward Return']))
-
-                    #print(result[0])
-                    #print(temp[-1:][indicator])
-
-                    #print(temp[-1:][strategy])
-
-                    #plt.plot(temp[indicator],label=name)
-
-                    #stringLabel = str(result[0]['ma_length']) + " " + strategy + " at " + str(n_forward) + " day return " + str(result[0]['test_forward_return'].round(3))
-
-                    #plt.plot(temp['Close'].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-                    #plt.plot(temp[indicator].rolling(result[0]['ma_length']).mean(),label = stringLabel)
-
-                    #plt.legend()
-
-                    #plt.show()
-
-                    #plt.hist(temp['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-                    #plt.show()        
-
+        #print(predRet)
+        #print(temp.iloc[-1]['MACD_Signal'])
+    
 plt.hist(sdevs, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 plt.hist(expectedReturns, bins='auto')  # arguments are passed to np.histogram
 plt.show()
 
 
-
 # In[ ]:
 
 
@@ -319,6 +271,7 @@ plt.show()
 
 
 # In[ ]:
+
 
 
 
@@ -335,24 +288,6 @@ for i in range(0,len(trades)):
 
 
 plt.hist(set['Forward Return'], bins='auto')  # arguments are passed to np.histogram
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
@@ -454,10 +389,12 @@ for i in dateindex2:
 # In[ ]:
 
 
+
 orderbook.sort_values(by=['date','orderside'], ascending=True)
 
 
 # In[ ]:
+
 
 
 
@@ -553,6 +490,7 @@ for i in dateindex2:
 
 
 # In[ ]:
+
 
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[69]:
+# In[54]:
 
 
 import yfinance as yf
@@ -51,10 +51,10 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind
 
 
-# In[70]:
+# In[55]:
 
 
-n_forward = 1
+n_forward = 7
 
 #name = 'GLD'
 #name = 'SPY'
@@ -78,7 +78,7 @@ bench = yf.Ticker(benchName)
 benchData = bench.history(interval="1d",start=start_date,end=end_date, auto_adjust=True)
 
 
-# In[71]:
+# In[56]:
 
 
 
@@ -93,7 +93,7 @@ nyse = mcal.get_calendar('NYSE')
 nyse_trading_dates= nyse.schedule(start_date=start_date, end_date=end_date+timedelta(days=n_forward))
 
 
-# In[72]:
+# In[57]:
 
 
 #if(len(data)==len(dateindex_)):
@@ -112,13 +112,13 @@ idx2 = frequency
 idx2 = pd.to_datetime(idx2, errors='coerce')
 
 
-# In[74]:
+# In[ ]:
 
 
 
 
 
-# In[75]:
+# In[58]:
 
 
 def unique(list1):
@@ -141,7 +141,7 @@ def unique(list1):
 
 
 
-# In[76]:
+# In[ ]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -212,7 +212,7 @@ df2 = df2[~df2['Symbol'].str.contains(pat)]
 df3 = df3[~df3['Symbol'].str.contains(pat)]
 
 #choose size
-size=100
+size=400
 stocks = list(df1["Symbol"].sample(n=int(size/3)))
 mfunds = list(df2["Symbol"].sample(n=int(size/3)))
 bonds = list(df3["Symbol"].sample(n=int(size/3)))
@@ -293,7 +293,7 @@ else:
     
 
 
-# In[77]:
+# In[ ]:
 
 
 #symbols = ['BTC-USD']
@@ -309,7 +309,7 @@ vetted_symbols = symbols_data.Symbol.unique()
 
 
 
-# In[78]:
+# In[ ]:
 
 
 returnsdf = pd.DataFrame()
@@ -348,7 +348,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[79]:
+# In[ ]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -361,7 +361,7 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[80]:
+# In[ ]:
 
 
 #cumulative returns over test period
@@ -387,7 +387,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[81]:
+# In[ ]:
 
 
 limit = 100
@@ -424,7 +424,7 @@ plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
 
-# In[128]:
+# In[ ]:
 
 
 #for symbol in topXPercent:
@@ -442,7 +442,7 @@ def processSets(symbol):
     Long_EVWMA.columns = ['EVWMA_26']
 
     #p 209 of ttr doc
-    MACD_EVWMA = pd.DataFrame(Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])
+    MACD_EVWMA = pd.DataFrame((Short_EVWMA['EVWMA_12'] - Long_EVWMA['EVWMA_26'])/Long_EVWMA['EVWMA_26'])
     MACD_EVWMA.columns = ['MACD-line']
 
     Signal_EVWMA = pd.DataFrame(ta.ema(MACD_EVWMA["MACD-line"], length=9))
@@ -464,13 +464,15 @@ def processSets(symbol):
     expectedReturns = []
 
     sdevs = []
+    
+    conditions_ = []
 
     #rolling windows
     for i in range(0,width1):
         temp = subset.loc[frequency[i].strftime('%Y-%m-%d'):frequency[i+width2].strftime('%Y-%m-%d')].copy()
         #temp = subset.loc[dateindex[i].strftime('%Y-%m-%d'):dateindex[i+width2].strftime('%Y-%m-%d')].copy()
-        adf_results = ts.adfuller(temp['Close'], 1)
-        H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
+        #adf_results = ts.adfuller(temp['Close'], 1)
+        #H, c, val = compute_Hc(temp['Close'], kind='price', simplified=True)
         
         #data.loc[dateindex[i]:dateindex[i+width2]]
 
@@ -513,35 +515,21 @@ def processSets(symbol):
             temp[strategy] = ta.ema(temp[indicator], length=result[0]['ma_length'])
 
         elif strategy == "SMA":
-            temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()
+            temp[strategy] = temp[indicator].rolling(result[0]['ma_length']).mean()        
 
         conditions = 0
-        
-        if (temp.iloc[-1]['MACD_Signal'] > 0) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):    
-            #44%
-            #(temp.iloc[-1]['MACD_Signal'] > 0) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
-            
-            #16%
-            #if (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
-            
-            #16%
-            #if (H > 0.5 or adf_results[1] > 0.05) and (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
-            #and temp.iloc[-1]['MACD_Signal'] > 0:
 
-            #15% (beats hold)
-            #temp.iloc[-1]['MACD_Signal'] > 0:
-                
-            #6%
-            #if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] and temp.iloc[-1][indicator]>temp.iloc[-1][strategy] and result[0]['p-value'] > .1):
-            
-            #6%
-            #(H > 0.5 or adf_results[1] > 0.05):
-        
-            #add to list of trades
-            trades.append(temp.index[-1])
+        if (result[0]['p-value'] > .05 and temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
+
+            if (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn):
+                conditions = conditions + 1
+
+        if conditions >= 1:    
+            trades.append(temp.index[-1].strftime('%Y-%m-%d'))
             expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
             sdevs.append(np.std(temp['Forward Return']))
-            
+            #print(predRet)
+            #print(temp.iloc[-1]['MACD_Signal'])
 
     #print("starting set")
     set = pd.DataFrame()
@@ -550,6 +538,7 @@ def processSets(symbol):
         value = pd.DataFrame(subset.loc[trades[i]]).transpose()
         value['ExpectedReturn'] = expectedReturns[i]
         value['sdev'] = sdevs[i]
+        value['conditions'] = conditions_[i]
         set = pd.concat([set,value])
 
     #display(set)
@@ -564,13 +553,13 @@ futures3 = [pool3.submit(processSets, args) for args in topXPercent]
 wait(futures3, timeout=None, return_when=ALL_COMPLETED)
 
 
-# In[66]:
+# In[ ]:
 
 
 
 
 
-# In[129]:
+# In[ ]:
 
 
 
@@ -635,8 +624,9 @@ for f in futures3:
                 temp['valueAtPurchase'] = set.loc[idate]['Close']
                 temp['estRet'] = estRet
                 #temp['qty'] = Qty
-                temp['dateBought'] = idate        
+                temp['dateBought'] = idate    
                 temp['dateToBeSold'] = dateToBeSold
+                temp['conditions'] = set.loc[idate]['conditions']
 
                 btemp = pd.DataFrame(columns = column_names)
                 btemp["date"]=[dateToBeSold]
@@ -712,6 +702,8 @@ for f in futures3:
             subset = orderbook[orderbook['date']==t]
             gain = 0
             paid = 0
+            
+            Qty = 0
 
             if len(subset) != 0:
 
@@ -739,16 +731,26 @@ for f in futures3:
 
                 if len(purchases) != 0:
 
+                    #ProportionOfFunds = funds * BuyFundsPercent
+                    
+                    Qty = 0                    
+                    
+                    paid = 0
+                    
+                    #reduced total return (when combined macd/sma)
+                    #for c in range(1,int(purchases['conditions'].values[0])):
+                        
                     ProportionOfFunds = funds * BuyFundsPercent
 
-                    Qty = ProportionOfFunds / purchases['valueAtPurchase'].values[0]
+                    Qty = ProportionOfFunds / purchases['valueAtPurchase'].values[0] + Qty
+
+                    paid = purchases['valueAtPurchase'].values[0]*Qty + paid                        
+
                     #print(purchases['valueAtPurchase'].values[0])
                     #print("Qty purchased " + str(Qty.round(2)))
 
                     temp['date'] = [i]
                     temp['qty'] = [Qty]
-
-                    paid = purchases['valueAtPurchase'].values[0]*Qty
 
                     buyLog = buyLog.append(temp)
 
@@ -804,7 +806,13 @@ plt.legend(loc="upper left",fontsize=8)
 plt.xticks(rotation=30) 
 
 
-# In[130]:
+# In[ ]:
+
+
+
+
+
+# In[ ]:
 
 
 

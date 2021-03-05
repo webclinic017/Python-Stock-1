@@ -1,0 +1,20 @@
+
+Problem is hurst (mean reversion) and macd are looking at up to today's values to determine next.
+	To use hurst properly.  need 3 values.  Today's compared with next x and it's relation to next day's (i.e. is the mean reverting on a future date and what is that relation to today's date)
+	Therefore I removed hurst.
+	
+	MACD is a little bit easier to augment.  I simply need to do a comparison of 26 day forecast of slow in the future with today's 12 day ema, and then do a 9 day ema of this.
+	
+	Therefore  removed them from the calculations
+	and the best is (with 7 n_ahead)
+	  if (result[0]['p-value'] > .05 and temp.iloc[-1][indicator]>temp.iloc[-1][strategy]):
+                
+        if (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn):
+            conditions = conditions + 1
+			
+
+	n_forward = 7
+    #works good with past dates
+    #if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['p-value'] > .05 and temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) and (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn):
+    #works good with current dates, not past
+    #if H > 0.5 or adf_results[1] > 0.05 or temp.iloc[-1]['MACD_Signal'] > 0 and (result[0]['p-value'] > .1 and result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn and (temp.iloc[-1][indicator]>temp.iloc[-1][strategy])):
