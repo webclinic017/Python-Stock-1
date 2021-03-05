@@ -418,10 +418,10 @@ sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
 plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
-# In[68]:
+# In[ ]:
 
 
-temp.index[-1]
+
 
 
 # In[ ]:
@@ -543,8 +543,8 @@ def processSets(symbol):
 
     #display(set)
 
-    #return set
-    print(set)
+    return set
+    #print(set)
 
 pool3 = concurrent.futures.ProcessPoolExecutor(cores)
 
