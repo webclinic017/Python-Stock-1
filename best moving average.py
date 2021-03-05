@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[1]:
 
 
 
 get_ipython().system('pip install hurst fbprophet matplotlib yfinance numpy statsmodels datetime pandas_market_calendars')
 
 
-# In[12]:
+# In[2]:
 
 
 
@@ -37,12 +37,12 @@ from scipy.stats import ttest_ind
 
 
 
-# In[13]:
+# In[3]:
 
 
 
 
-n_forward = 7
+n_forward = 1
 name = 'BTC-USD'
 #name = 'GLD'
 #name = 'SPY'
@@ -60,7 +60,7 @@ end_date1 = end_date - timedelta(weeks=w)
 start_date = end_date1 - timedelta(weeks=w)
 
 
-# In[14]:
+# In[4]:
 
 
 
@@ -101,7 +101,7 @@ print(len(data))
 
 
 
-# In[15]:
+# In[5]:
 
 
 
@@ -116,7 +116,7 @@ dateindex2 = data.loc[end_date1:end_date].index
 dateindex2_n_forward = [end_date1 + datetime.timedelta(days=x) for x in range(0, ((end_date+ timedelta(days=n_forward))-end_date1).days)]
 
 
-# In[16]:
+# In[6]:
 
 
 #if(len(data)==len(dateindex_)):
@@ -135,7 +135,7 @@ idx2 = frequency
 idx2 = pd.to_datetime(idx2, errors='coerce')
 
 
-# In[17]:
+# In[7]:
 
 
 
@@ -197,7 +197,10 @@ for i in range(0,width1):
     #m.fit(ts1)
 
     #forecast only last day in model (can verify result) needs to be based on df.loc (similar to df_inner)
-    #forecast = pd.DataFrame(pd.DataFrame(idx2)[0][(pd.DataFrame(idx2)[0] <= datetime.datetime.strptime(forecast_e[0][0], "%Y-%m-%d").date()) & (pd.DataFrame(idx2)[0] >= datetime.datetime.strptime(forecast_s[0][0], "%Y-%m-%d").date())])
+    #forecast = pd.DataFrame([pd.DataFrame(official_trading_dates.index).loc[pd.DatetimeIndex(official_trading_dates.index).get_loc(temp.index[-1].strftime('%Y-%m-%d'))+n_forward-2][0].strftime('%Y-%m-%d')])
+    #forecast = pd.DataFrame([(temp.index[-1] + timedelta(days=n_forward)).strftime('%Y-%m-%d')]) 
+    #forecast = pd.DataFrame([frequency[pd.DataFrame(frequency).set_index('Date').index.get_loc(dateindex[i])+n_forward].strftime('%Y-%m-%d')])
+    
     #forecast.columns = ['ds']
 
     #Predict and plot

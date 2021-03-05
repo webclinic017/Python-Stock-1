@@ -141,7 +141,7 @@ def unique(list1):
 
 
 
-# In[ ]:
+# In[59]:
 
 
 pd.set_option('display.max_columns', None) #replace n with the number of columns you want to see completely
@@ -293,7 +293,7 @@ else:
     
 
 
-# In[ ]:
+# In[60]:
 
 
 #symbols = ['BTC-USD']
@@ -309,7 +309,7 @@ vetted_symbols = symbols_data.Symbol.unique()
 
 
 
-# In[ ]:
+# In[61]:
 
 
 returnsdf = pd.DataFrame()
@@ -348,7 +348,7 @@ topXPercent = returnsdf['stock'][0:int(cutoff)]
 topXPercent
 
 
-# In[ ]:
+# In[62]:
 
 
 dateindex = benchData.loc[start_date:end_date].index
@@ -361,7 +361,7 @@ returnsdf[0:int(cutoff)]
 
 
 
-# In[ ]:
+# In[63]:
 
 
 #cumulative returns over test period
@@ -387,7 +387,7 @@ for i in topXPercent:
     plt.legend(loc="upper left",fontsize=8)
 
 
-# In[ ]:
+# In[64]:
 
 
 limit = 100
@@ -418,10 +418,10 @@ sp500_cumulative_ret_data = (sp500_data + 1).cumprod()
 plt.plot(sp500_cumulative_ret_data,label="bench: " + benchName)
 
 
-# In[ ]:
+# In[68]:
 
 
-
+temp.index[-1]
 
 
 # In[ ]:
@@ -465,7 +465,7 @@ def processSets(symbol):
 
     sdevs = []
     
-    conditions_ = []
+    #conditions_ = []
 
     #rolling windows
     for i in range(0,width1):
@@ -525,7 +525,7 @@ def processSets(symbol):
                 conditions = conditions + 1
 
         if conditions >= 1:    
-            trades.append(temp.index[-1].strftime('%Y-%m-%d'))
+            trades.append(temp.index[-1])
             expectedReturns.append((result[0]['training_forward_return']+result[0]['test_forward_return'])/2)
             sdevs.append(np.std(temp['Forward Return']))
             #print(predRet)
@@ -538,13 +538,13 @@ def processSets(symbol):
         value = pd.DataFrame(subset.loc[trades[i]]).transpose()
         value['ExpectedReturn'] = expectedReturns[i]
         value['sdev'] = sdevs[i]
-        value['conditions'] = conditions_[i]
+        #value['conditions'] = conditions_[i]
         set = pd.concat([set,value])
 
     #display(set)
 
-    return set
-    #print(set)
+    #return set
+    print(set)
 
 pool3 = concurrent.futures.ProcessPoolExecutor(cores)
 
@@ -626,7 +626,7 @@ for f in futures3:
                 #temp['qty'] = Qty
                 temp['dateBought'] = idate    
                 temp['dateToBeSold'] = dateToBeSold
-                temp['conditions'] = set.loc[idate]['conditions']
+                #temp['conditions'] = set.loc[idate]['conditions']
 
                 btemp = pd.DataFrame(columns = column_names)
                 btemp["date"]=[dateToBeSold]
