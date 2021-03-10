@@ -163,7 +163,7 @@ date_time_obj_start = start_date
 
 date_time_obj_end = end_date
 
-official_trading_dates_plus5= nyse.schedule(start_date=date_time_obj_start.strftime('%Y-%m-%d'), end_date=date_time_obj_end+timedelta(days=5))
+official_trading_dates_plus5= nyse.schedule(start_date=date_time_obj_start , end_date=date_time_obj_end+timedelta(days=5))
 
 next_trading_day = official_trading_dates_plus5.index[official_trading_dates_plus5.index > end_date.strftime('%m/%d/%Y')][0]
 
