@@ -55,8 +55,8 @@ class LinearRegressionResidualPlot:
         plt.savefig("ResVsFitted.png")
 
     @staticmethod
-    def check_residual_normality(fitted_y, residuals_normalized):
-        qq = ProbPlot(residuals_normalized)
+    def check_residual_normality(fitted_y, t_residuals_normalized):
+        qq = ProbPlot(t_residuals_normalized)
         plot_2 = qq.qqplot(line='45', alpha=0.5, color='#4C72B0', lw=1)
         plot_2.axes[0].set_title('Normal Q-Q')
         plot_2.axes[0].set_xlabel('Theoretical Quantiles')
@@ -64,27 +64,27 @@ class LinearRegressionResidualPlot:
 
         # annotations
 
-        df = pd.DataFrame(pd.DataFrame(residuals_normalized).set_index(fitted_y.index))
+        df = pd.DataFrame(pd.DataFrame(t_residuals_normalized).set_index(fitted_y.index))
         df['ranks'] = df.rank(method='dense').astype(int)-1
         ranks = df.ranks.values
 
         s_thresh = max(qq.theoretical_quantiles)
-        abs_norm_resid_top = pd.DataFrame(residuals_normalized).index[abs(residuals_normalized)>s_thresh].to_list()
+        abs_norm_resid_top = pd.DataFrame(t_residuals_normalized).index[abs(t_residuals_normalized)>s_thresh].to_list()
 
         for r, i in enumerate(abs_norm_resid_top):
             plot_2.axes[0].annotate(fitted_y.index[i],
-                                    xy=(qq.theoretical_quantiles[ranks[i]],residuals_normalized[i]))
+                                    xy=(qq.theoretical_quantiles[ranks[i]],t_residuals_normalized[i]))
 
         plt.savefig("Normality.png")
 
     @staticmethod
-    def check_homoscedacticity(fitted_y, residuals_normalized):
+    def check_homoscedacticity(fitted_y, t_residuals_normalized):
 
-        qq = ProbPlot(residuals_normalized)
+        qq = ProbPlot(t_residuals_normalized)
         s_thresh = np.sqrt(max(qq.theoretical_quantiles))
 
         # absolute squared normalized residuals
-        residuals_norm_abs_sqrt = np.sqrt(np.abs(residuals_normalized))
+        residuals_norm_abs_sqrt = np.sqrt(np.abs(t_residuals_normalized))
 
         plot_3 = plt.figure()
         plt.scatter(fitted_y, residuals_norm_abs_sqrt, alpha=0.5)
@@ -109,8 +109,8 @@ class LinearRegressionResidualPlot:
         plt.savefig("Homoscadasticity.png")
 
     @staticmethod
-    def check_influence(fitted_y, linear_model, cooks, leverage, residuals_normalized):
-        qq = ProbPlot(residuals_normalized)
+    def check_influence(fitted_y, linear_model, cooks, leverage, t_residuals_normalized):
+        qq = ProbPlot(t_residuals_normalized)
 
         cooks = np.round(f.pdf(cooks,len(linear_model.tvalues)+1, len(linear_model.fittedvalues)-len(linear_model.tvalues)-1),2)
 
@@ -125,8 +125,8 @@ class LinearRegressionResidualPlot:
         l_thresh2 = (3*(len(linear_model.tvalues)-1)/len(linear_model.fittedvalues))        
         
         plot_4 = plt.figure()
-        plt.scatter(leverage, residuals_normalized, alpha=0.5)
-        sns.regplot(leverage, residuals_normalized,
+        plt.scatter(leverage, t_residuals_normalized, alpha=0.5)
+        sns.regplot(leverage, t_residuals_normalized,
                     scatter=False,
                     ci=False,
                     lowess=True,
@@ -145,7 +145,7 @@ class LinearRegressionResidualPlot:
 
         x = cooks
         y = leverage
-        z = residuals_normalized
+        z = t_residuals_normalized
 
         outlier_check = pd.concat([pd.DataFrame(x),pd.DataFrame(y),pd.DataFrame(z)],axis=1).set_index(labels_)
 
@@ -184,11 +184,11 @@ class LinearRegressionResidualPlot:
                 CString = CString + " (C:" + str(outlier_check.iloc[i][0].round(2)) + ")"
             elif(outlier_check.iloc[i][0]>=c_thresh1):
                 cc='blue'
-                CString = CString + " (C:" + str(outlier_check.iloc[i][0])
+                CString = CString + " (C:" + str(outlier_check.iloc[i][0].round(2)) + ")"
             
             plot_4.axes[0].annotate(fitted_y.index[i] + CString, color=cc,
                                 xy=(leverage[i],
-                                    residuals_normalized[i]))
+                                    t_residuals_normalized[i]))
             
         plt.savefig("Influence.png")
 
@@ -209,9 +209,10 @@ class LinearRegressionResidualPlot:
         fitted_y = linear_model.fittedvalues
         # model residuals
         residuals = linear_model.resid
+        #print(residuals-linear_model.get_influence().resid_studentized_internal)
 
         # normalized residuals
-        residuals_normalized = linear_model.get_influence().resid_studentized_internal
+        t_residuals_normalized = linear_model.get_influence().resid_studentized_external
 
         # leverage, from statsmodels internals
         leverage = linear_model.get_influence().hat_matrix_diag
@@ -221,11 +222,11 @@ class LinearRegressionResidualPlot:
 
         self.check_linearity_assumption(fitted_y, residuals)
 
-        self.check_residual_normality(fitted_y, residuals_normalized)
+        self.check_residual_normality(fitted_y, t_residuals_normalized)
 
-        self.check_homoscedacticity(fitted_y, residuals_normalized)
+        self.check_homoscedacticity(fitted_y, t_residuals_normalized)
 
-        self.check_influence(fitted_y, linear_model, cooks, leverage, residuals_normalized)
+        self.check_influence(fitted_y, linear_model, cooks, leverage, t_residuals_normalized)
 
         # 1. Non-Linearity Test
         try:
