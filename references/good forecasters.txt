@@ -1,4 +1,6 @@
 
+
+
 Problem is hurst (mean reversion) and macd are looking at up to today's values to determine next.
 	To use hurst properly.  need 3 values.  Today's compared with next x and it's relation to next day's (i.e. is the mean reverting on a future date and what is that relation to today's date)
 	Therefore I removed hurst.
