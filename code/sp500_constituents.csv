@@ -1,0 +1,501 @@
+,name,cik,ticker
+10,Agilent Technologies,1090872.0,A
+26,American Airlines Group,6201.0,AAL
+7,Advance Auto Parts,1158449.0,AAP
+43,Apple,320193.0,AAPL
+1,AbbVie,1551152.0,ABBV
+33,AmerisourceBergen,1140859.0,ABC
+2,Abiomed,815094.0,ABMD
+0,Abbott Laboratories,1800.0,ABT
+3,Accenture,1467373.0,ACN
+5,Adobe,796343.0,ADBE
+37,Analog Devices,6281.0,ADI
+46,ADM,7084.0,ADM
+53,Automatic Data Processing,8670.0,ADP
+52,Autodesk,769397.0,ADSK
+25,Ameren Corp,1002910.0,AEE
+27,American Electric Power,4904.0,AEP
+8,AES Corp,874761.0,AES
+9,Aflac,4977.0,AFL
+29,American International Group,5272.0,AIG
+49,Assurant,1267238.0,AIZ
+48,Arthur J. Gallagher & Co.,354190.0,AJG
+12,Akamai Technologies,1086222.0,AKAM
+14,Albemarle Corporation,915913.0,ALB
+16,Align Technology,1097149.0,ALGN
+13,Alaska Air Group,766421.0,ALK
+19,Allstate Corp,899051.0,ALL
+17,Allegion,1579241.0,ALLE
+44,Applied Materials,6951.0,AMAT
+24,Amcor,1748790.0,AMCR
+6,Advanced Micro Devices,2488.0,AMD
+34,Ametek,1037868.0,AME
+35,Amgen,318154.0,AMGN
+32,Ameriprise Financial,820027.0,AMP
+30,American Tower,1053507.0,AMT
+23,Amazon,1018724.0,AMZN
+47,Arista Networks,1596532.0,ANET
+38,Ansys,1013462.0,ANSS
+39,Anthem,1156039.0,ANTM
+40,Aon,315293.0,AON
+41,A. O. Smith,91142.0,AOS
+42,APA Corporation,6769.0,APA
+11,Air Products & Chemicals,2969.0,APD
+36,Amphenol Corp,820313.0,APH
+45,Aptiv,1521332.0,APTV
+15,Alexandria Real Estate Equities,1035443.0,ARE
+51,Atmos Energy,731802.0,ATO
+4,Activision Blizzard,718877.0,ATVI
+55,AvalonBay Communities,915912.0,AVB
+76,Broadcom,1730168.0,AVGO
+56,Avery Dennison,8818.0,AVY
+31,American Water Works,1410636.0,AWK
+28,American Express,4962.0,AXP
+54,AutoZone,866787.0,AZO
+70,Boeing Company,12927.0,BA
+59,Bank of America,70858.0,BAC
+61,Baxter International,10456.0,BAX
+60,"Bath & Body Works, Inc.",701985.0,BBWI
+64,Best Buy,764478.0,BBY
+62,Becton Dickinson,10795.0,BDX
+203,Franklin Resources,38777.0,BEN
+78,Brown–Forman,14693.0,BF.B
+67,Biogen,875045.0,BIIB
+65,Bio-Rad Laboratories,12208.0,BIO
+69,BNY Mellon,1390777.0,BK
+71,Booking Holdings,1075531.0,BKNG
+57,Baker Hughes,1701605.0,BKR
+68,BlackRock,1364742.0,BLK
+58,Ball Corp,9389.0,BLL
+75,Bristol-Myers Squibb,14272.0,BMY
+77,Broadridge Financial Solutions,1383312.0,BR
+63,Berkshire Hathaway,1067983.0,BRK.B
+74,Boston Scientific,885725.0,BSX
+72,BorgWarner,908255.0,BWA
+73,Boston Properties,1037540.0,BXP
+110,Citigroup,831001.0,C
+121,Conagra Brands,23217.0,CAG
+85,Cardinal Health,721371.0,CAH
+88,Carrier Global,1783180.0,CARR
+90,Caterpillar,18230.0,CAT
+104,Chubb,896159.0,CB
+91,Cboe Global Markets,1374310.0,CBOE
+92,CBRE,1138118.0,CBRE
+130,Crown Castle,1051470.0,CCI
+87,Carnival Corporation,815097.0,CCL
+81,Cadence Design Systems,813672.0,CDNS
+93,CDW,1402057.0,CDW
+94,Celanese,1306830.0,CE
+97,Cerner,804753.0,CERN
+98,CF Industries,1324404.0,CF
+111,Citizens Financial Group,759944.0,CFG
+105,Church & Dwight,313927.0,CHD
+79,C. H. Robinson,1043277.0,CHRW
+101,Charter Communications,1091667.0,CHTR
+106,Cigna,1739940.0,CI
+107,Cincinnati Financial,20286.0,CINF
+118,Colgate-Palmolive,21665.0,CL
+113,Clorox,21076.0,CLX
+120,Comerica,28412.0,CMA
+119,Comcast,1166691.0,CMCSA
+114,CME Group,1156375.0,CME
+103,Chipotle Mexican Grill,1058090.0,CMG
+132,Cummins,26172.0,CMI
+115,CMS Energy,811156.0,CMS
+95,Centene Corporation,1071739.0,CNC
+96,CenterPoint Energy,1130310.0,CNP
+84,Capital One Financial,927628.0,COF
+80,Cabot Oil & Gas,858470.0,COG
+125,The Cooper Companies,711404.0,COO
+122,ConocoPhillips,1163165.0,COP
+129,Costco,909832.0,COST
+83,Campbell Soup,16732.0,CPB
+126,Copart,900075.0,CPRT
+99,Charles River Laboratories,1100682.0,CRL
+408,Salesforce,1108524.0,CRM
+109,Cisco Systems,858877.0,CSCO
+131,CSX,277948.0,CSX
+108,Cintas Corporation,723254.0,CTAS
+89,Catalent,1596783.0,CTLT
+117,Cognizant Technology Solutions,1058290.0,CTSH
+128,Corteva,1755672.0,CTVA
+112,Citrix Systems,877890.0,CTXS
+133,CVS Health,64803.0,CVS
+102,Chevron Corporation,93410.0,CVX
+82,Caesars Entertainment,1590895.0,CZR
+151,Dominion Energy,715957.0,D
+139,Delta Air Lines,27904.0,DAL
+158,DuPont,1666700.0,DD
+138,Deere & Co.,315189.0,DE
+145,Discover Financial Services,1393612.0,DFS
+149,Dollar General,29534.0,DG
+391,Quest Diagnostics,1022079.0,DGX
+134,D. R. Horton,882184.0,DHI
+135,Danaher Corporation,313616.0,DHR
+481,The Walt Disney Company,1744489.0,DIS
+147,Discovery (Series C),1437107.0,DISCK
+148,Dish Network,1001082.0,DISH
+144,Digital Realty Trust,1297996.0,DLR
+150,Dollar Tree,935703.0,DLTR
+153,Dover Corporation,29905.0,DOV
+154,Dow,1751788.0,DOW
+152,Domino's Pizza,1286681.0,DPZ
+157,Duke Realty Corp,783280.0,DRE
+136,Darden Restaurants,940944.0,DRI
+155,DTE Energy,936340.0,DTE
+156,Duke Energy,1326160.0,DUK
+137,DaVita,927066.0,DVA
+141,Devon Energy,1090012.0,DVN
+159,DXC Technology,1688568.0,DXC
+142,DexCom,1093557.0,DXCM
+166,Electronic Arts,712515.0,EA
+162,eBay,1065088.0,EBAY
+163,Ecolab,31462.0,ECL
+123,Consolidated Edison,1047862.0,ED
+171,Equifax,33185.0,EFX
+164,Edison International,827052.0,EIX
+175,Estée Lauder Companies,1001250.0,EL
+160,Eastman Chemical,915389.0,EMN
+167,Emerson Electric Company,32604.0,EMR
+168,Enphase Energy,1463101.0,ENPH
+170,EOG Resources,821189.0,EOG
+172,Equinix,1101239.0,EQIX
+173,Equity Residential,906107.0,EQR
+178,Eversource Energy,72741.0,ES
+174,Essex Property Trust,920522.0,ESS
+161,Eaton Corporation,1551182.0,ETN
+169,Entergy,65984.0,ETR
+176,Etsy,1370637.0,ETSY
+177,Evergy,1711269.0,EVRG
+165,Edwards Lifesciences,1099800.0,EW
+180,Exelon,1109357.0,EXC
+182,Expeditors,746515.0,EXPD
+181,Expedia Group,1324424.0,EXPE
+183,Extra Space Storage,1289490.0,EXR
+197,Ford,37996.0,F
+143,Diamondback Energy,1539838.0,FANG
+187,Fastenal,815556.0,FAST
+186,Facebook,1326801.0,FB
+200,Fortune Brands Home & Security,1519751.0,FBHS
+204,Freeport-McMoRan,831259.0,FCX
+189,FedEx,1048911.0,FDX
+192,FirstEnergy,1031296.0,FE
+185,F5 Networks,1048695.0,FFIV
+190,Fidelity National Information Services,1136893.0,FIS
+194,Fiserv,798354.0,FISV
+191,Fifth Third Bancorp,35527.0,FITB
+195,Fleetcor,1175454.0,FLT
+196,FMC Corporation,37785.0,FMC
+201,Fox Corporation (Class A),1754301.0,FOXA
+193,First Republic Bank,1132979.0,FRC
+188,Federal Realty Investment Trust,34903.0,FRT
+198,Fortinet,1262039.0,FTNT
+199,Fortive,1659166.0,FTV
+209,General Dynamics,40533.0,GD
+210,General Electric,40545.0,GE
+721,Genzyme,,GENZ
+214,Gilead Sciences,882095.0,GILD
+211,General Mills,40704.0,GIS
+215,Globe Life,320335.0,GL
+127,Corning,24741.0,GLW
+212,General Motors,1467858.0,GM
+208,Generac Holdings,1474735.0,GNRC
+21,Alphabet (Class C),1652044.0,GOOG
+213,Genuine Parts,40987.0,GPC
+216,Global Payments,1123360.0,GPN
+205,Gap,39911.0,GPS
+206,Garmin,1121788.0,GRMN
+217,Goldman Sachs,886982.0,GS
+218,W. W. Grainger,277135.0,GWW
+219,Halliburton,45012.0,HAL
+222,Hasbro,46080.0,HAS
+238,Huntington Bancshares,49196.0,HBAN
+220,Hanesbrands,1359841.0,HBI
+223,HCA Healthcare,860730.0,HCA
+231,Home Depot,354950.0,HD
+227,Hess Corporation,4447.0,HES
+221,The Hartford,874766.0,HIG
+239,Huntington Ingalls Industries,1501585.0,HII
+229,Hilton Worldwide,1585689.0,HLT
+230,Hologic,859737.0,HOLX
+232,Honeywell,773840.0,HON
+228,Hewlett Packard Enterprise,1645590.0,HPE
+236,HP,47217.0,HPQ
+233,Hormel,48465.0,HRL
+225,Henry Schein,1000228.0,HSIC
+234,Host Hotels & Resorts,1070750.0,HST
+226,The Hershey Company,47111.0,HSY
+237,Humana,49071.0,HUM
+235,Howmet Aerospace,4281.0,HWM
+249,IBM,51143.0,IBM
+248,Intercontinental Exchange,1571949.0,ICE
+241,Idexx Laboratories,874716.0,IDXX
+240,IDEX Corporation,832101.0,IEX
+252,International Flavors & Fragrances,51253.0,IFF
+244,Illumina,1110803.0,ILMN
+245,Incyte,879169.0,INCY
+242,IHS Markit,1598014.0,INFO
+247,Intel,50863.0,INTC
+253,Intuit,896878.0,INTU
+250,International Paper,51434.0,IP
+251,Interpublic Group,51644.0,IPG
+256,IPG Photonics,1111928.0,IPGP
+257,IQVIA,1478242.0,IQV
+246,Ingersoll Rand,1699150.0,IR
+258,Iron Mountain,1020569.0,IRM
+254,Intuitive Surgical,1035267.0,ISRG
+207,Gartner,749251.0,IT
+243,Illinois Tool Works,49826.0,ITW
+255,Invesco,914208.0,IVZ
+260,Jacobs Engineering Group,52988.0,J
+261,J. B. Hunt,728535.0,JBHT
+264,Johnson Controls,833444.0,JCI
+259,Jack Henry & Associates,779152.0,JKHY
+263,Johnson & Johnson,200406.0,JNJ
+266,Juniper Networks,1043604.0,JNPR
+265,JPMorgan Chase,19617.0,JPM
+268,Kellogg's,55067.0,K
+269,KeyCorp,91576.0,KEY
+270,Keysight Technologies,1601046.0,KEYS
+275,Kraft Heinz,1637459.0,KHC
+272,Kimco Realty,879101.0,KIM
+274,KLA Corporation,319201.0,KLAC
+271,Kimberly-Clark,55785.0,KMB
+273,Kinder Morgan,1506307.0,KMI
+86,CarMax,1170010.0,KMX
+116,Coca-Cola Company,21344.0,KO
+276,Kroger,56873.0,KR
+267,Kansas City Southern,54480.0,KSU
+291,Loews Corporation,60086.0,L
+283,Leidos,1336920.0,LDOS
+282,Leggett & Platt,58492.0,LEG
+284,Lennar,920760.0,LEN
+278,LabCorp,920148.0,LH
+277,L3Harris Technologies,202058.0,LHX
+287,Linde,1707925.0,LIN
+289,LKQ Corporation,1065696.0,LKQ
+285,Eli Lilly & Co,59478.0,LLY
+290,Lockheed Martin,936468.0,LMT
+286,Lincoln National,59558.0,LNC
+18,Alliant Energy,352541.0,LNT
+292,Lowe's,60667.0,LOW
+279,Lam Research,707549.0,LRCX
+293,Lumen Technologies,18926.0,LUMN
+420,Southwest Airlines,92380.0,LUV
+281,Las Vegas Sands,1300514.0,LVS
+280,Lamb Weston,1679273.0,LW
+294,LyondellBasell,1489393.0,LYB
+288,Live Nation Entertainment,1335258.0,LYV
+303,Mastercard,1141391.0,MA
+315,Mid-America Apartments,912595.0,MAA
+299,Marriott International,1048286.0,MAR
+302,Masco,62996.0,MAS
+305,McDonald's,63908.0,MCD
+312,Microchip Technology,827054.0,MCHP
+306,McKesson Corporation,927653.0,MCK
+322,Moody's Corporation,1059556.0,MCO
+319,Mondelez International,1103982.0,MDLZ
+307,Medtronic,1613103.0,MDT
+309,MetLife,1099219.0,MET
+311,MGM Resorts International,789570.0,MGM
+317,Mohawk Industries,851968.0,MHK
+304,McCormick & Company,63754.0,MKC
+298,MarketAxess,1278021.0,MKTX
+301,Martin Marietta Materials,916076.0,MLM
+300,Marsh & McLennan,62709.0,MMC
+321,Monster Beverage,865752.0,MNST
+22,Altria Group,764180.0,MO
+324,The Mosaic Company,1285785.0,MOS
+297,Marathon Petroleum,1510295.0,MPC
+320,Monolithic Power Systems,1280452.0,MPWR
+308,Merck & Co.,310158.0,MRK
+316,Moderna,1682852.0,MRNA
+296,Marathon Oil,101778.0,MRO
+323,Morgan Stanley,895421.0,MS
+326,MSCI,1408198.0,MSCI
+314,Microsoft,789019.0,MSFT
+325,Motorola Solutions,68505.0,MSI
+295,M&T Bank,36270.0,MTB
+310,Mettler Toledo,1037646.0,MTD
+313,Micron Technology,723125.0,MU
+342,Norwegian Cruise Line Holdings,1513761.0,NCLH
+327,Nasdaq,1120193.0,NDAQ
+334,NextEra Energy,753308.0,NEE
+331,Newmont,1164727.0,NEM
+329,Netflix,1065280.0,NFLX
+337,NiSource,1111711.0,NI
+336,Nike,320187.0,NKE
+341,NortonLifeLock,849399.0,NLOK
+335,Nielsen Holdings,1492633.0,NLSN
+340,Northrop Grumman,1133421.0,NOC
+343,Nov,1021860.0,NOV
+414,ServiceNow,1373715.0,NOW
+344,NRG Energy,1013871.0,NRG
+338,Norfolk Southern,702165.0,NSC
+328,NetApp,1002047.0,NTAP
+339,Northern Trust,73124.0,NTRS
+345,Nucor,73309.0,NUE
+346,Nvidia,1045810.0,NVDA
+347,NVR,906163.0,NVR
+330,Newell Brands,814453.0,NWL
+333,News Corp (Class B),1564708.0,NWS
+348,NXP,1413447.0,NXPI
+395,Realty Income Corporation,726728.0,O
+351,Old Dominion Freight Line,878927.0,ODFL
+355,Organon & Co.,1821825.0,OGN
+353,Oneok,1039684.0,OKE
+352,Omnicom Group,29989.0,OMC
+354,Oracle,1341439.0,ORCL
+349,O'Reilly Automotive,898173.0,ORLY
+356,Otis Worldwide,1781335.0,OTIS
+350,Occidental Petroleum,797468.0,OXY
+361,Paycom,1590955.0,PAYC
+360,Paychex,723531.0,PAYX
+365,People's United Financial,1378946.0,PBCT
+357,Paccar,75362.0,PCAR
+224,Healthpeak Properties,765880.0,PEAK
+384,Public Service Enterprise Group,788784.0,PEG
+363,Penn National Gaming,921738.0,PENN
+366,PepsiCo,77476.0,PEP
+369,Pfizer,78003.0,PFE
+378,Principal Financial Group,1126328.0,PFG
+379,Procter & Gamble,80424.0,PG
+380,Progressive Corporation,80661.0,PGR
+359,Parker-Hannifin,76334.0,PH
+386,PulteGroup,822416.0,PHM
+358,Packaging Corporation of America,75677.0,PKG
+367,PerkinElmer,31791.0,PKI
+381,Prologis,1045609.0,PLD
+370,Philip Morris International,1413329.0,PM
+374,PNC Financial Services,713676.0,PNC
+364,Pentair,77360.0,PNR
+372,Pinnacle West Capital,764622.0,PNW
+375,Pool Corporation,945841.0,POOL
+376,PPG Industries,79879.0,PPG
+377,PPL,922224.0,PPL
+368,Perrigo,1585364.0,PRGO
+382,Prudential Financial,1137774.0,PRU
+385,Public Storage,1393311.0,PSA
+371,Phillips 66,1534701.0,PSX
+383,PTC,857005.0,PTC
+387,PVH,78239.0,PVH
+389,Quanta Services,1050915.0,PWR
+373,Pioneer Natural Resources,1038357.0,PXD
+362,PayPal,1633917.0,PYPL
+390,Qualcomm,804328.0,QCOM
+388,Qorvo,1604778.0,QRVO
+406,Royal Caribbean Group,884887.0,RCL
+179,Everest Re,1095073.0,RE
+396,Regency Centers,910606.0,REG
+397,Regeneron Pharmaceuticals,872589.0,REGN
+398,Regions Financial Corporation,1281761.0,RF
+401,Robert Half International,315213.0,RHI
+393,Raymond James Financial,720005.0,RJF
+392,Ralph Lauren Corporation,1037038.0,RL
+400,ResMed,943819.0,RMD
+402,Rockwell Automation,1024478.0,ROK
+403,Rollins,84839.0,ROL
+404,Roper Technologies,882835.0,ROP
+405,Ross Stores,745732.0,ROST
+399,Republic Services,1060391.0,RSG
+394,Raytheon Technologies,101829.0,RTX
+409,SBA Communications,1034054.0,SBAC
+422,Starbucks,829224.0,SBUX
+100,Charles Schwab Corporation,316709.0,SCHW
+412,Sealed Air,1012100.0,SEE
+415,Sherwin-Williams,89800.0,SHW
+426,SVB Financial,719739.0,SIVB
+262,JM Smucker,91419.0,SJM
+410,Schlumberger,87347.0,SLB
+418,Snap-on,91440.0,SNA
+428,Synopsys,883241.0,SNPS
+419,Southern Company,92122.0,SO
+416,Simon Property Group,1063761.0,SPG
+407,S&P Global,64040.0,SPGI
+413,Sempra Energy,1032208.0,SRE
+424,Steris,1757898.0,STE
+423,State Street Corporation,93751.0,STT
+411,Seagate Technology,1137789.0,STX
+124,Constellation Brands,16918.0,STZ
+421,Stanley Black & Decker,93556.0,SWK
+417,Skyworks Solutions,4127.0,SWKS
+427,Synchrony Financial,1601712.0,SYF
+425,Stryker Corporation,310764.0,SYK
+429,Sysco,96021.0,SYY
+50,AT&T,732717.0,T
+318,Molson Coors Beverage Company,24545.0,TAP
+446,TransDigm Group,1260221.0,TDG
+436,Teledyne Technologies,1094285.0,TDY
+66,Bio-Techne,842023.0,TECH
+435,TE Connectivity,1385157.0,TEL
+438,Teradyne,97210.0,TER
+449,Truist Financial,92230.0,TFC
+437,Teleflex,96943.0,TFX
+434,Target Corporation,27419.0,TGT
+443,TJX Companies,109198.0,TJX
+442,Thermo Fisher Scientific,97745.0,TMO
+430,T-Mobile US,1283699.0,TMUS
+433,Tapestry,1116132.0,TPR
+448,Trimble,864749.0,TRMB
+431,T. Rowe Price,1113169.0,TROW
+447,The Travelers Companies,86312.0,TRV
+444,Tractor Supply Company,916365.0,TSCO
+439,Tesla,1318605.0,TSLA
+452,Tyson Foods,100493.0,TSN
+445,Trane Technologies,1466258.0,TT
+432,Take-Two Interactive,946581.0,TTWO
+450,Twitter,1418091.0,TWTR
+440,Texas Instruments,97476.0,TXN
+441,Textron,217346.0,TXT
+451,Tyler Technologies,860731.0,TYL
+456,Under Armour (Class A),1336917.0,UAA
+459,United Airlines,100517.0,UAL
+453,UDR,74208.0,UDR
+463,Universal Health Services,352915.0,UHS
+454,Ulta Beauty,1403568.0,ULTA
+460,UnitedHealth Group,731766.0,UNH
+464,Unum Group,5513.0,UNM
+458,Union Pacific,100885.0,UNP
+461,United Parcel Service,1090727.0,UPS
+462,United Rentals,1067701.0,URI
+455,U.S. Bancorp,36104.0,USB
+474,Visa,1403161.0,V
+471,VF Corporation,103379.0,VFC
+472,ViacomCBS,813828.0,VIAC
+465,Valero Energy,1035002.0,VLO
+476,Vulcan Materials,1396009.0,VMC
+475,Vornado Realty Trust,899689.0,VNO
+468,Verisk Analytics,1442145.0,VRSK
+467,Verisign,1014473.0,VRSN
+470,Vertex Pharmaceuticals,875320.0,VRTX
+466,Ventas,740260.0,VTR
+473,Viatris,1792044.0,VTRS
+469,Verizon Communications,732712.0,VZ
+478,Wabtec,943452.0,WAB
+483,Waters Corporation,1000697.0,WAT
+480,Walgreens Boots Alliance,1618921.0,WBA
+488,Western Digital,106040.0,WDC
+484,WEC Energy Group,783325.0,WEC
+486,Welltower,766704.0,WELL
+485,Wells Fargo,72971.0,WFC
+492,Whirlpool Corporation,106640.0,WHR
+494,Willis Towers Watson,1140536.0,WLTW
+482,Waste Management,823768.0,WM
+493,Williams Companies,107263.0,WMB
+479,Walmart,104169.0,WMT
+477,W. R. Berkley Corporation,11544.0,WRB
+490,WestRock,1732845.0,WRK
+487,West Pharmaceutical Services,105770.0,WST
+489,Western Union,1365135.0,WU
+491,Weyerhaeuser,106535.0,WY
+495,Wynn Resorts,1174922.0,WYNN
+496,Xcel Energy,72903.0,XEL
+497,Xilinx,743988.0,XLNX
+184,ExxonMobil,34088.0,XOM
+140,Dentsply Sirona,818479.0,XRAY
+498,Xylem,1524472.0,XYL
+499,Yum! Brands,1041061.0,YUM
+501,Zimmer Biomet,1136869.0,ZBH
+500,Zebra Technologies,877212.0,ZBRA
+502,Zions Bancorp,109380.0,ZION
+503,Zoetis,1555280.0,ZTS
