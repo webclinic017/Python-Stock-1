@@ -1,0 +1,86 @@
+<html>
+  <head>
+    <title>Matplotlib</title>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="./favicon.png">
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <py-env>
+      - matplotlib
+    </py-env>
+    </head>
+    <body>
+	<div class="tab">
+	  <button class="tablinks" onclick="openCity(event, 'London')">London</button>
+	  <button class="tablinks" onclick="openCity(event, 'Paris')">Paris</button>
+	  <button class="tablinks" onclick="openCity(event, 'Tokyo')">Tokyo</button>
+	</div>
+
+	<!-- Tab content -->
+	<div id="London" class="tabcontent">
+	  <h3>London</h3>
+	  <p>London is the capital city of England.</p>
+	</div>
+
+	<div id="Paris" class="tabcontent">
+	  <h3>Paris</h3>
+	  <p>Paris is the capital of France.</p>
+	</div>
+
+	<div id="Tokyo" class="tabcontent">
+	  <h3>Tokyo</h3>
+	  <p>Tokyo is the capital of Japan.</p>
+	</div>
+      <div id="mpl"></div>
+      <py-script output="mpl">
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+import numpy as np
+
+# First create the x and y coordinates of the points.
+n_angles = 36
+n_radii = 8
+min_radius = 0.25
+radii = np.linspace(min_radius, 0.95, n_radii)
+
+angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
+angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
+angles[:, 1::2] += np.pi / n_angles
+
+x = (radii * np.cos(angles)).flatten()
+y = (radii * np.sin(angles)).flatten()
+z = (np.cos(radii) * np.cos(3 * angles)).flatten()
+
+# Create the Triangulation; no triangles so Delaunay triangulation created.
+triang = tri.Triangulation(x, y)
+
+# Mask off unwanted triangles.
+triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
+                         y[triang.triangles].mean(axis=1))
+                < min_radius)
+
+fig1, ax1 = plt.subplots()
+ax1.set_aspect('equal')
+tpc = ax1.tripcolor(triang, z, shading='flat')
+fig1.colorbar(tpc)
+ax1.set_title('tripcolor of Delaunay triangulation, flat shading')
+
+fig1
+      </py-script>
+	  <script>
+	function openCity(evt, cityName) {
+	  var i, tabcontent, tablinks;
+	  tabcontent = document.getElementsByClassName("tabcontent");
+	  for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+	  }
+	  tablinks = document.getElementsByClassName("tablinks");
+	  for (i = 0; i < tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	  }
+	  document.getElementById(cityName).style.display = "block";
+	  evt.currentTarget.className += " active";
+	}
+</script>
+    </body>
+</html>
