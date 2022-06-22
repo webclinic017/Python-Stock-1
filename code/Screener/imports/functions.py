@@ -1,6 +1,6 @@
 #from imports.imports import *
 #from imports.functions import *
-import imports
+#from imports import *
 
 def getStock(npa):
     symbol = npa[0]
