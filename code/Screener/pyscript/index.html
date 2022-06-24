@@ -1,135 +1,74 @@
-<!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" 
-	href="https://pyscript.net/alpha/pyscript.css" />
-<link rel="stylesheet"
-	href="tabs.css"
-<script defer 
-	src="https://pyscript.net/alpha/pyscript.js">
-</script>
-<link rel="stylesheet" 
-        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+<script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 <py-env>
-	- matplotlib
-	- pandas
-	- pickle
+   - matplotlib
+   - pandas
+   - seaborn
 </py-env>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body {font-family: Arial;}
-
-/* Style the tab */
-.tab {
-  overflow: hidden;
-  border: 1px solid #ccc;
-  background-color: #f1f1f1;
-}
-
-/* Style the buttons inside the tab */
-.tab button {
-  background-color: inherit;
-  float: left;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 14px 16px;
-  transition: 0.3s;
-  font-size: 17px;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-  background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-  background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-  display: none;
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-top: none;
-}
-</style>
 </head>
 <body>
-
-<h2>Tabs</h2>
-<p>Click on the buttons inside the tabbed menu:</p>
-
-<div class="tab">
-  <button class="tablinks" onclick="openTab(event, 'Screener')">Screener</button>
-  <button class="tablinks" onclick="openTab(event, 'Charts')">Charts</button>
-  <button class="tablinks" onclick="openTab(event, 'Fundamentals')">Fundamentals</button>
-  <button class="tablinks" onclick="openTab(event, 'Values')">Values</button>
-</div>
-
 <div class="jumbotron">
-<h1>Drop Down</h1?
-<p class="lead">
-Graphs
-</p>
+   <h1>Weather Data</h1>
+   <p class="lead">
+      Some graphs about the weather in London in 2020
+   </p>
 </div>
 <div class="row">
-    <div class="col-sm-2 p-2 ml-4 mb-1">
-        <button type="button" class="btn btn-secondary">Select chart from list:</button>
-    </div>
-    <div class="col-sm-4 p-2 mr-4 mb-1">
-        <select class="form-control" id="select">
-            <option value="Tmax">Maximum Temperature</option>
-            <option value="Tmin">Minimum Temperature</option>
-            <option value="Sun">Sun</option>
-            <option value="Rain">Rain</option>        
-        </select>
-    </div>
+   <div class="col-sm-2 p-2 ml-4 mb-1">
+   <button type="button" class="btn btn-secondary">Select chart from list:</button>
+   </div>
+   <div class="col-sm-4 p-2 mr-4 mb-1">
+      <select class="form-control" id="select">
+         <option value="Tmax">Maximum Temperature</option>
+         <option value="Tmin">Minimum Temperature</option>
+         <option value="Sun">Sun</option> 
+         <option value="Rain">Rain</option>
+      </select>
+   </div>
 </div>
-
-<div id="Screener" class="tabcontent">
-  <h3>Screener</h3>
+<div class="row">
+   <div class="col-sm-6 p-2 shadow ml-4 mr-4 mb-4 bg-white rounded">
+      <div id="chart1"></div>
+   </div>
 </div>
-
-<div id="Charts" class="tabcontent">
-  <h3>Charts</h3>
-</div>
-
-<div id="Fundamentals" class="tabcontent">
-  <h3>Fundamentals</h3>
-</div>
-
-<div id="Values" class="tabcontent">
-  <h3>Values</h3>
-</div>
-
-
-<script>
-function openTab(evt, tabName) {
-  var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-  document.getElementById(tabName).style.display = "block";
-  evt.currentTarget.className += " active";
-}
-</script>
 <py-script>
-	import pandas as pd
-	import pickle
-	import matplotlib.pyplot as plt
-	from pyodide.http import open_url
-	
-	[start,end, prices_df, sp1500_index_df, sp500, sp600, sp400, market_data, completed_fred_pvt, completed_bonds, completed_bonds_pvt, sectors, indexes, screener_sorted] = pickle.load(open('../data_object.pkl', 'rb'))
-
-	prices = prices_df
+# Import libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Get the data
+from pyodide.http import open_url
+url = 'https://raw.githubusercontent.com/alanjones2/uk-historical-weather/main/data/Heathrow.csv'
+url_content = open_url(url)
+df = pd.read_csv(url_content)
+# filter the data for the year 2020
+df = df[df['Year']==2020]
+# Function to plot the chart
+def plot(chart):
+   fig, ax = plt.subplots()
+   sns.lineplot(y=chart, x="Month", data=df, ax=ax)
+   pyscript.write("chart1",fig)
+# Set up a proxy to be called when a 'change'
+# event occurs in the select control
+from js import document
+from pyodide import create_proxy
+# Read the value of the select control
+# and call 'plot'
+def selectChange(event):
+   choice = document.getElementById("select").value
+   plot(choice)
+# set the proxy
+def setup():
+   # Create a JsProxy for the callback function
+   change_proxy = create_proxy(selectChange)
+   e = document.getElementById("select")
+   e.addEventListener("change", change_proxy)
+setup()
+# Intitially call plot with 'Tmax'
+plot('Tmax')
 </py-script>
 </body>
-</html> 
+</html>
