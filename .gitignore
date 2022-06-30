@@ -8,3 +8,4 @@ code/Screener/SP1500_screener_multiple.xlsx
 code/Screener/SP1500_screener_multiple.xlsx
 code/Screener/data_object.pkl
 code/Screener/fundamental.pkl
+*.dirlock
