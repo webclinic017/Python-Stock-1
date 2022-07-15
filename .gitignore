@@ -9,3 +9,6 @@ code/Screener/SP1500_screener_multiple.xlsx
 code/Screener/data_object.pkl
 code/Screener/fundamental.pkl
 *.dirlock
+code/Screener/fundamental.pkl
+code/Screener/fundamental.pkl
+code/Screener/.ipynb_checkpoints/AnalyzeSP1500-checkpoint.ipynb
