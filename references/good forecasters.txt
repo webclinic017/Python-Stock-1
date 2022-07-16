@@ -1,5 +1,9 @@
 
-
+adf < .05 or .01, mean reverting
+Hurst
+> .5 - The time series is mean reverting.
+= .5 - The time series is a Geometric Brownian Motion.
+< .5 - The time series is trending.
 
 Problem is hurst (mean reversion) and macd are looking at up to today's values to determine next.
 	To use hurst properly.  need 3 values.  Today's compared with next x and it's relation to next day's (i.e. is the mean reverting on a future date and what is that relation to today's date)
@@ -20,3 +24,4 @@ Problem is hurst (mean reversion) and macd are looking at up to today's values t
     #if (H > 0.5 or adf_results[1] > 0.05) or (result[0]['p-value'] > .05 and temp.iloc[-1][indicator]>temp.iloc[-1][strategy]) and (result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn):
     #works good with current dates, not past
     #if H > 0.5 or adf_results[1] > 0.05 or temp.iloc[-1]['MACD_Signal'] > 0 and (result[0]['p-value'] > .1 and result[0]['training_forward_return'] > minExpectedReturn and result[0]['test_forward_return'] > minExpectedReturn and (temp.iloc[-1][indicator]>temp.iloc[-1][strategy])):
+
