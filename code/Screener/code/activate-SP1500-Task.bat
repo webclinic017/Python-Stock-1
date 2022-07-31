@@ -32,7 +32,7 @@ if defined _OLD_CODEPAGE (
     set _OLD_CODEPAGE=
 )
 
-cd C:\Users\User\Documents\wiki\wiki\dev\python\Python-Stock\code\Screener
-C:\Users\User\AppData\Local\Programs\Python\Python39\Scripts\ipython.exe --TerminalIPythonApp.file_to_run=code\SP1500.ipynb
-xcopy data\processed\*.csv "P:\.shortcut-targets-by-id\1UvGLUJlzZfE8ZzfMw0dedjA1v9se4Tlq\STOCK DATA (JOSH AND RICK)\REPORTS\" /Y
-xcopy reports\figures\*.png "P:\.shortcut-targets-by-id\1UvGLUJlzZfE8ZzfMw0dedjA1v9se4Tlq\STOCK DATA (JOSH AND RICK)\FIGURES\" /Y
+cd C:\Users\User\Documents\wiki\wiki\dev\python\Python-Stock\code\Screener\code
+C:\Users\User\AppData\Local\Programs\3.9-JupyterLab\Scripts\ipython.exe --TerminalIPythonApp.file_to_run=SP1500.ipynb
+xcopy ..\data\processed\*.csv "P:\.shortcut-targets-by-id\1UvGLUJlzZfE8ZzfMw0dedjA1v9se4Tlq\STOCK DATA (JOSH AND RICK)\REPORTS\" /Y
+xcopy ..\reports\figures\*.png "P:\.shortcut-targets-by-id\1UvGLUJlzZfE8ZzfMw0dedjA1v9se4Tlq\STOCK DATA (JOSH AND RICK)\FIGURES\" /Y
