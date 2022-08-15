@@ -1,3 +1,4 @@
+tensorflow==2.8
 #python 3.9.9
 keras
 keras.models
@@ -33,7 +34,7 @@ rpy2
 sklearn
 pysqlite3matplotlibdataframe_imageseabornscipyjupyterlab
 statsmodels
-vevestaX
+#vevestaX
 xlsxwriter
 yfinance
 #needed for prophet#pandas==1.2.5
