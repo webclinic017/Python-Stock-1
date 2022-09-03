@@ -1,0 +1,258 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "4c2ff31f",
+   "metadata": {},
+   "source": [
+    "# 00 Environment"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "04a5c882",
+   "metadata": {},
+   "source": [
+    "#### 👉Before you solve a Reinforcement Learning problem you need to define what are\n",
+    "- the actions\n",
+    "- the states of the world\n",
+    "- the rewards\n",
+    "\n",
+    "#### 👉We are using the `Taxi-v3` environment from OpenAI's gym: https://gym.openai.com/envs/Taxi-v3/\n",
+    "\n",
+    "#### 👉`Taxi-v3` is an easy environment because the action space is small, and the state space is large but finite.\n",
+    "\n",
+    "#### 👉Environments with a finite number of actions and states are called tabular"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "e3629346",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The autoreload extension is already loaded. To reload it, use:\n",
+      "  %reload_ext autoreload\n",
+      "Populating the interactive namespace from numpy and matplotlib\n"
+     ]
+    }
+   ],
+   "source": [
+    "%load_ext autoreload\n",
+    "%autoreload 2\n",
+    "%pylab inline\n",
+    "%config InlineBackend.figure_format = 'svg'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "76e9a06d",
+   "metadata": {},
+   "source": [
+    "## Load the environment 🌎"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "ebfba291",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import gym\n",
+    "env = gym.make(\"Taxi-v3\").env"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1fcfc13a",
+   "metadata": {},
+   "source": [
+    "## Action space"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "98cfdb84",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Action Space Discrete(6)\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Action Space {}\".format(env.action_space))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4f53a38e",
+   "metadata": {},
+   "source": [
+    "## State space"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "e809514b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "State Space Discrete(500)\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"State Space {}\".format(env.observation_space))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c8f6a690",
+   "metadata": {},
+   "source": [
+    "## Rewards"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "0faad2a7",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "env.P[state][action][0]:  (1.0, 223, -1, False)\n"
+     ]
+    }
+   ],
+   "source": [
+    "# env.P is double dictionary.\n",
+    "# - The 1st key represents the state, from 0 to 499\n",
+    "# - The 2nd key represens the action taken by the agent,\n",
+    "#   from 0 to 5\n",
+    "\n",
+    "# example\n",
+    "state = 123\n",
+    "action = 0  # move south\n",
+    "\n",
+    "# env.P[state][action][0] is a list with 4 elements\n",
+    "# (probability, next_state, reward, done)\n",
+    "# \n",
+    "#  - probability\n",
+    "#    It is always 1 in this environment, which means\n",
+    "#    there are no external/random factors that determine the\n",
+    "#    next_state\n",
+    "#    apart from the agent's action a.\n",
+    "#\n",
+    "#  - next_state: 223 in this case\n",
+    "# \n",
+    "#  - reward: -1 in this case\n",
+    "#\n",
+    "#  - done: boolean (True/False) indicates wheter the\n",
+    "#    episode has ended (i.e. the driver has dropped the\n",
+    "#    passenger at the correct destination)\n",
+    "print('env.P[state][action][0]: ', env.P[state][action][0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "552caf92",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+---------+\n",
+      "|\u001b[34;1mR\u001b[0m: | : :G|\n",
+      "| :\u001b[43m \u001b[0m| : : |\n",
+      "| : : : : |\n",
+      "| | : | : |\n",
+      "|Y| : |\u001b[35mB\u001b[0m: |\n",
+      "+---------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Need to call reset() at least once before render() will work\n",
+    "env.reset()\n",
+    "\n",
+    "env.s = 123\n",
+    "env.render(mode='human')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "2ded2ba5",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+---------+\n",
+      "|\u001b[34;1mR\u001b[0m: | : :G|\n",
+      "| : | : : |\n",
+      "| :\u001b[43m \u001b[0m: : : |\n",
+      "| | : | : |\n",
+      "|Y| : |\u001b[35mB\u001b[0m: |\n",
+      "+---------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "env.s = 223\n",
+    "env.render(mode='human')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "2aacea45",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

@@ -1,4 +1,5 @@
 tensorflow==2.8
+pyfolio
 #python 3.9.9
 keras
 keras.models
